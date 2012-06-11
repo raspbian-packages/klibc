@@ -93,7 +93,7 @@ $(obj)/syntax.h: $(obj)/syntax.c
 	$(Q):
 
 # Targets to install
-ifeq ($(ARCH),ia64)
+ifneq (,$(filter $(ARCH),ia64 ppc64))
 install-y := sh
 else
 install-y := sh.shared
