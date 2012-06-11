@@ -1,0 +1,39 @@
+From 9bdffde924573bf1c2f795a4b57a302d9485d248 Mon Sep 17 00:00:00 2001
+From: Thorsten Glaser <tg@mirbsd.org>
+Date: Sat, 29 Sep 2012 19:20:37 +0000
+Subject: [PATCH 1/2] [klibc] arm: fix trashing of callee-saved registers in
+ thumb setjmp()
+
+fixes http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=634890
+(although dynamically-linked binaries seem to have another bug)
+
+Signed-off-by: Thorsten Glaser <tg@mirbsd.org>
+Signed-off-by: maximilian attems <max@stro.at>
+---
+ usr/klibc/arch/arm/setjmp.S |    3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/usr/klibc/arch/arm/setjmp.S b/usr/klibc/arch/arm/setjmp.S
+index d351e0e..92ffc43 100644
+--- a/usr/klibc/arch/arm/setjmp.S
++++ b/usr/klibc/arch/arm/setjmp.S
+@@ -70,6 +70,7 @@ longjmp:
+ 	.type setjmp, #function
+ 	.thumb_func
+ setjmp:
++	mov	r2, r0
+ 	mov	r3, lr
+ 	stmia	r0!, {r3, r4, r5, r6, r7}
+ 	mov	r3, r8
+@@ -78,6 +79,8 @@ setjmp:
+ 	mov	r6, fp
+ 	mov	r7, sp
+ 	stmia	r0!, {r3, r4, r5, r6, r7}
++	/* Do not trash r4 .. r7 */
++	ldmia	r2!, {r3, r4, r5, r6, r7}
+ 	mov	r0, #0
+ 	BX(lr)
+ 	.size setjmp,.-setjmp
+-- 
+1.7.10.4
+
