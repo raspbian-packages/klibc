@@ -1,0 +1,30 @@
+From 62d84fb8793fdf21c5267688de231cc1a111e070 Mon Sep 17 00:00:00 2001
+From: Thorsten Glaser <tg@mirbsd.org>
+Date: Sat, 29 Sep 2012 20:18:48 +0000
+Subject: [PATCH 2/2] [klibc] arm: unbreak armhf shared binaries (those with
+ thumb)
+
+The linker command was wrong.
+
+Signed-off-by: Thorsten Glaser <tg@mirbsd.org>
+Signed-off-by: maximilian attems <max@stro.at>
+---
+ usr/klibc/arch/arm/MCONFIG |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/usr/klibc/arch/arm/MCONFIG b/usr/klibc/arch/arm/MCONFIG
+index addbe40..53bc1dc 100644
+--- a/usr/klibc/arch/arm/MCONFIG
++++ b/usr/klibc/arch/arm/MCONFIG
+@@ -19,7 +19,7 @@ ifeq ($(CONFIG_KLIBC_THUMB),y)
+ CPU_ARCH := $(CPU_ARCH)t
+ KLIBCREQFLAGS += -mthumb
+ KLIBCLDFLAGS  += --thumb-entry _start
+-KLIBCEMAIN     = --thumb-entry _start
++KLIBCEMAIN     = --thumb-entry main
+ KLIBCREQFLAGS += -mabi=aapcs-linux
+ KLIBCSHAREDFLAGS = -Ttext 0x380200
+ else
+-- 
+1.7.10.4
+
