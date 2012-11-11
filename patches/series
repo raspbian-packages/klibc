@@ -1,0 +1,10 @@
+ia64-static
+ppc64-static
+klibc-linux-libc-dev
+insmod
+multiarch-include-path
+Fix-minimal-mv-to-work-across-fs
+0001-klibc-Avoid-overflow-for-very-long-variable-name.patch
+0001-klibc-arm-fix-trashing-of-callee-saved-registers-in-.patch
+0002-klibc-arm-unbreak-armhf-shared-binaries-those-with-t.patch
+0001-klibc-PATCH-fix-ARM-longjmp-with-zero-val.patch

@@ -1,0 +1,62 @@
+From 127b17bb38dbfc95386a52b2159f059221d33497 Mon Sep 17 00:00:00 2001
+From: Jim Meyering <jim@meyering.net>
+Date: Tue, 3 Jul 2012 17:32:33 +0800
+Subject: [PATCH] [klibc] Avoid overflow for very long variable name
+
+Otherwise, this:
+  $ perl -le 'print "v"x(2**31+1) ."=1"' | dash
+provokes integer overflow:
+
+  (gdb) bt
+  #0  doformat (dest=0x61d580, f=0x416a08 "%s: %d: %s: ", ap=0x7fffffffd308)
+      at output.c:310
+  #1  0x00000000004128c1 in outfmt (file=0x61d580, fmt=0x416a08 "%s: %d: %s: ")
+      at output.c:257
+  #2  0x000000000040382e in exvwarning2 (msg=0x417339 "Out of space",
+      ap=0x7fffffffd468) at error.c:125
+  #3  0x000000000040387e in exverror (cond=1, msg=0x417339 "Out of space",
+      ap=0x7fffffffd468) at error.c:156
+  #4  0x0000000000403938 in sh_error (msg=0x417339 "Out of space") at error.c:172
+  #5  0x000000000040c970 in ckmalloc (nbytes=18446744071562067984)
+      at memalloc.c:57
+  #6  0x000000000040ca78 in stalloc (nbytes=18446744071562067972)
+      at memalloc.c:132
+  #7  0x000000000040ece9 in grabstackblock (len=18446744071562067972)
+      at memalloc.h:67
+  #8  0x00000000004106b5 in readtoken1 (firstc=118, syntax=0x419522 "",
+      eofmark=0x0, striptabs=0) at parser.c:1040
+  #9  0x00000000004101a4 in xxreadtoken () at parser.c:826
+  #10 0x000000000040fe1d in readtoken () at parser.c:697
+  #11 0x000000000040edcc in parsecmd (interact=0) at parser.c:145
+  #12 0x000000000040c679 in cmdloop (top=1) at main.c:224
+  #13 0x000000000040c603 in main (argc=2, argv=0x7fffffffd9f8) at main.c:178
+
+  #8  0x00000000004106b5 in readtoken1 (firstc=118, syntax=0x419522 "",
+      eofmark=0x0, striptabs=0) at parser.c:1040
+  1040    grabstackblock(len);
+  (gdb) p len
+  $30 = -2147483644
+
+Signed-off-by: Jim Meyering <meyering@redhat.com>
+Signed-off-by: Herbert Xu <herbert@gondor.apana.org.au>
+Signed-off-by: maximilian attems <max@stro.at>
+---
+ usr/dash/parser.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/usr/dash/parser.c b/usr/dash/parser.c
+index 528d005..6e076a5 100644
+--- a/usr/dash/parser.c
++++ b/usr/dash/parser.c
+@@ -852,7 +852,7 @@ readtoken1(int firstc, char const *syntax, char *eofmark, int striptabs)
+ {
+ 	int c = firstc;
+ 	char *out;
+-	int len;
++	size_t len;
+ 	struct nodelist *bqlist;
+ 	int quotef;
+ 	int dblquote;
+-- 
+1.7.10.4
+
