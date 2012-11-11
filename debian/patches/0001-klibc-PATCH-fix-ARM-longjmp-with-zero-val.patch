@@ -1,0 +1,35 @@
+From f05ff116bb9edbbb81d82fa47b78e630ce878470 Mon Sep 17 00:00:00 2001
+From: Bill Pringlemeir <bpringle@sympatico.ca>
+Date: Tue, 2 Oct 2012 13:29:52 -0400
+Subject: [PATCH] [klibc] [PATCH] fix ARM longjmp with zero 'val'.
+
+We need to set the condition codes on the ARM.  The previous version was
+using a left over condition code from the caller.  Also, use conditional
+execution to eliminate branch and reduce size.
+
+Signed-off-by: Bill Pringlemeir <bpringle@sympatico.ca>
+[ backported to 3.0.1-2 - maks ]
+Signed-off-by: maximilian attems <max@stro.at>
+---
+ usr/klibc/arch/arm/setjmp.S |    7 +++----
+ 1 file changed, 3 insertions(+), 4 deletions(-)
+
+diff --git a/usr/klibc/arch/arm/setjmp.S b/usr/klibc/arch/arm/setjmp.S
+index 92ffc43..9f96274 100644
+--- a/usr/klibc/arch/arm/setjmp.S
++++ b/usr/klibc/arch/arm/setjmp.S
+@@ -40,8 +40,9 @@ setjmp:
+ 	.type longjmp, #function
+ longjmp:
+ 	ldmia	r0, {r4, r5, r6, r7, r8, r9, r10, fp, sp, lr}
+-	mov	r0, r1
++	movs	r0, r1
++	moveq	r0, #1
+ 	BX(lr)
+ 	.size longjmp,.-longjmp
+
+ #else /* __thumb__ */
+ 
+-- 
+1.7.10.4
+
