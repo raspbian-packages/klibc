@@ -35,6 +35,7 @@ klib-y += vsnprintf.o snprintf.o vsprintf.o sprintf.o \
 	  siglongjmp.o \
 	  sigaction.o sigpending.o sigprocmask.o sigsuspend.o \
 	  pselect.o ppoll.o \
+	  pread.o pwrite.o \
 	  brk.o sbrk.o malloc.o realloc.o zalloc.o calloc.o \
 	  mmap.o shm_open.o shm_unlink.o \
 	  memcpy.o memcmp.o memset.o memccpy.o memmem.o memswap.o \
