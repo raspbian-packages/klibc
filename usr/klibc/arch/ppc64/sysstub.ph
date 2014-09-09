@@ -18,6 +18,9 @@ sub make_sysstub($$$$$@) {
 #if _CALL_ELF == 2
 	.type ${fname},\@function
 ${fname}:
+0:	addis	2,12,(.TOC.-0b)\@ha
+	addi	2,2,(.TOC.-0b)\@l
+	.localentry ${fname},.-${fname}
 #else
 	.section ".opd","aw"
 	.balign 8
