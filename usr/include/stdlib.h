@@ -92,4 +92,6 @@ static __inline__ int grantpt(int __fd)
 	return 0;		/* devpts does this all for us! */
 }
 
+__extern char *realpath(const char *, char *);
+
 #endif				/* _STDLIB_H */
