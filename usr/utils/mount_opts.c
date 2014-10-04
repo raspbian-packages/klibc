@@ -89,8 +89,13 @@ parse_mount_options(char *arg, unsigned long rwflag, struct extra_opts *extra)
 				break;
 		}
 
-		if (res != 0 && s[0])
-			add_extra_option(extra, opt);
+		if (res != 0 && s[0]) {
+			if (!strcmp(opt, "defaults"))
+				rwflag &= ~(MS_RDONLY|MS_NOSUID|MS_NODEV|
+					    MS_NOEXEC|MS_SYNCHRONOUS);
+			else
+				add_extra_option(extra, opt);
+		}
 	}
 
 	return rwflag;
