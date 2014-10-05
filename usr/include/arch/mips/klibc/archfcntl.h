@@ -19,7 +19,6 @@
 #define O_WRONLY	0x0001
 #define O_RDWR		0x0002
 #define O_APPEND	0x0008
-#define O_SYNC		0x0010
 #define O_NONBLOCK	0x0080
 #define O_CREAT         0x0100
 #define O_TRUNC		0x0200
@@ -27,11 +26,14 @@
 #define O_NOCTTY	0x0800
 #define FASYNC		0x1000
 #define O_LARGEFILE	0x2000
+#define O_SYNC		0x4010
 #define O_DIRECT	0x8000
 #define O_DIRECTORY	0x10000
 #define O_NOFOLLOW	0x20000
 #define O_NOATIME	0x40000
 #define O_CLOEXEC	0x80000
+#define O_PATH		0x200000
+#define O_TMPFILE	0x410000
 
 #define O_NDELAY	O_NONBLOCK
 
@@ -52,6 +54,24 @@
 #define F_GETLK64	33
 #define F_SETLK64	34
 #define F_SETLKW64	35
+
+#define F_SETOWN_EX	15
+#define F_GETOWN_EX	16
+
+#define F_GETOWNER_UIDS	17
+
+#define F_OFD_GETLK	36
+#define F_OFD_SETLK	37
+#define F_OFD_SETLKW	38
+
+#define F_OWNER_TID	0
+#define F_OWNER_PID	1
+#define F_OWNER_PGRP	2
+
+struct f_owner_ex {
+	int	type;
+	pid_t	pid;
+};
 
 #define FD_CLOEXEC	1
 
