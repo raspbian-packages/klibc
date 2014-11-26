@@ -1,0 +1,11 @@
+ia64-static
+ppc64-static
+klibc-linux-libc-dev
+insmod
+multiarch-include-path
+Fix-minimal-mv-to-work-across-fs
+ppc64el-load-toc-syscall-stub.patch
+implement-realpath.patch
+readlink-add-f-option.patch
+mount-implement-o-defaults.patch
+mips-update-archfcntl-h.patch
