@@ -24,7 +24,7 @@ dummypmap-y := dummypmap_test.o
 clean-dirs := static shared
 
 # Install binary
-ifeq ($(ARCH),ia64)
+ifneq (,$(filter $(ARCH),ia64 ppc64))
 install-y := $(static-y)
 else
 install-y := $(shared-y)
