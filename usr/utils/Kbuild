@@ -73,4 +73,8 @@ $(obj)/shared/reboot $(obj)/shared/poweroff: $(obj)/shared/halt
 clean-dirs := static shared
 
 # install only install the shared binaries
+ifeq ($(ARCH),ia64)
+install-y := $(static-y) static/reboot static/poweroff
+else
 install-y := $(shared-y) shared/reboot shared/poweroff
+endif

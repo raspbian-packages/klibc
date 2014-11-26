@@ -31,4 +31,8 @@ shared/run-init-lib := ../lib.a
 clean-dirs := static shared
 
 # install binary
+ifeq ($(ARCH),ia64)
+install-y := $(static-y)
+else
 install-y := $(shared-y)
+endif
