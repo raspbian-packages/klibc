@@ -7,6 +7,10 @@ use IPC::Open3;
 	     "-I${prefix}/${KCROSS}include/bits${BITSIZE}",
 	     "-I${prefix}/${KCROSS}include");
 
+if ($multiarch_path ne '') {
+	unshift(@includes, "-I${prefix}/${KCROSS}include/${multiarch_path}");
+}
+
 # Default optimization options (for compiles without -g)
 @optopt =  @OPTFLAGS;
 @goptopt = ('-O');
