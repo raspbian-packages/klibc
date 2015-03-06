@@ -9,3 +9,5 @@
 
 KLIBCOPTFLAGS += -Os
 KLIBCBITSIZE  = 64
+
+KLIBCSHAREDFLAGS  = -T $(src)/arch/mips/klibc.ld
