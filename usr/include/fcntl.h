@@ -9,7 +9,7 @@
 #include <klibc/compiler.h>
 #include <klibc/seek.h>
 #include <sys/types.h>
-#if defined(__mips__) && !defined(__mips64__)
+#if defined(__mips__) && ! defined(__mips64)
 # include <klibc/archfcntl.h>
 #endif
 #include <linux/fcntl.h>
