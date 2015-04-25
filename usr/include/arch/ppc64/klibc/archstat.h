@@ -12,6 +12,7 @@ struct stat {
 	mode_t		st_mode;
 	uid_t 		st_uid;
 	gid_t 		st_gid;
+	unsigned int	__pad1;
 	__stdev64	(st_rdev);
 	off_t		st_size;
 	unsigned long  	st_blksize;
