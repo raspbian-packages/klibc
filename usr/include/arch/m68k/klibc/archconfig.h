@@ -12,4 +12,7 @@
 /* On m68k, sys_mmap2 uses the current page size as the shift factor */
 #define _KLIBC_MMAP2_SHIFT	__getpageshift()
 
+/* Use sys_socketcall unconditionally */
+#define _KLIBC_SYS_SOCKETCALL 1
+
 #endif				/* _KLIBC_ARCHCONFIG_H */

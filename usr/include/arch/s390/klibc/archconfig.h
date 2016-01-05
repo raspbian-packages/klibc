@@ -12,4 +12,7 @@
 /* Both s390 and s390x use the "32-bit" version of this structure */
 #define _KLIBC_STATFS_F_TYPE_64 0
 
+/* Use sys_socketcall unconditionally */
+#define _KLIBC_SYS_SOCKETCALL 1
+
 #endif				/* _KLIBC_ARCHCONFIG_H */
