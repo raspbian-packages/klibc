@@ -9,6 +9,7 @@
 <?> int connect(int, const struct sockaddr *, socklen_t);
 <?> int listen(int, int);
 <?> int accept(int, struct sockaddr *, socklen_t *);
+<?> int accept4(int, struct sockaddr *, socklen_t *, int);
 <?> int getsockname(int, struct sockaddr *, socklen_t *);
 <?> int getpeername(int, struct sockaddr *, socklen_t *);
 <?> int socketpair(int, int, int, int *);
