@@ -47,11 +47,22 @@ while ( defined($line = <FILE>) ) {
 
 	print OUT "#include \"socketcommon.h\"\n";
 	print OUT "\n";
-	print OUT "#if _KLIBC_SYS_SOCKETCALL || !defined(__NR_${name})\n\n";
+	print OUT "#if _KLIBC_SYS_SOCKETCALL\n";
+	print OUT "# define DO_THIS_SOCKETCALL\n";
+	print OUT "#else\n";
+	print OUT "# if !defined(__NR_${name})";
+	if ($name eq 'accept') {
+	    print OUT " && !defined(__NR_accept4)";
+	}
+	print OUT "\n#  define DO_THIS_SOCKETCALL\n";
+	print OUT "# endif\n";
+	print OUT "#endif\n\n";
+
+	print OUT "#if defined(DO_THIS_SOCKETCALL) && defined(SYS_\U${name}\E)\n\n";
 
 	print OUT "extern long __socketcall(int, const unsigned long *);\n\n";
 
-	print OUT "$type $name (", join(', ', @cargs), ")\n";
+	print OUT "$type ${name}(", join(', ', @cargs), ")\n";
 	print OUT "{\n";
 	print OUT "    unsigned long args[$nargs];\n";
 	for ( $i = 0 ; $i < $nargs ; $i++ ) {
