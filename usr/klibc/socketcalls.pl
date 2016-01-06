@@ -42,44 +42,27 @@ while ( defined($line = <FILE>) ) {
 	$nargs = $i;
 	print " \\\n\t${name}.o";
 
-	if ( $arch eq 'i386' ) {
-	    open(OUT, "> ${outputdir}/${name}.S")
-		or die "$0: Cannot open ${outputdir}/${name}.S\n";
+	open(OUT, "> ${outputdir}/${name}.c")
+	    or die "$0: Cannot open ${outputdir}/${name}.c\n";
 
-	    print OUT "#include <sys/socketcalls.h>\n";
-	    print OUT "\n";
-	    print OUT "\t.text\n";
-	    print OUT "\t.align	4\n";
-	    print OUT "\t.globl	${name}\n";
-	    print OUT "\t.type	${name},\@function\n";
-	    print OUT "${name}:\n";
-	    print OUT "\tpushl	\$SYS_\U${name}\n";
-	    print OUT "\tjmp	__socketcall_common\n";
-	    print OUT "\t.size ${name},.-${name}\n";
-	    close(OUT);
-	} else {
-	    open(OUT, "> ${outputdir}/${name}.c")
-		or die "$0: Cannot open ${outputdir}/${name}.c\n";
+	print OUT "#include \"socketcommon.h\"\n";
+	print OUT "\n";
+	print OUT "#if _KLIBC_SYS_SOCKETCALL || !defined(__NR_${name})\n\n";
 
-	    print OUT "#include \"socketcommon.h\"\n";
-	    print OUT "\n";
-	    print OUT "#if _KLIBC_SYS_SOCKETCALL || !defined(__NR_${name})\n\n";
+	print OUT "extern long __socketcall(int, const unsigned long *);\n\n";
 
-	    print OUT "extern long __socketcall(int, const unsigned long *);\n\n";
-
-	    print OUT "$type $name (", join(', ', @cargs), ")\n";
-	    print OUT "{\n";
-	    print OUT "    unsigned long args[$nargs];\n";
-	    for ( $i = 0 ; $i < $nargs ; $i++ ) {
-		print OUT "    args[$i] = (unsigned long)a$i;\n";
-	    }
-	    print OUT "    return ($type) __socketcall(SYS_\U${name}\E, args);\n";
-	    print OUT "}\n\n";
-
-	    print OUT "#endif\n";
-
-	    close(OUT);
+	print OUT "$type $name (", join(', ', @cargs), ")\n";
+	print OUT "{\n";
+	print OUT "    unsigned long args[$nargs];\n";
+	for ( $i = 0 ; $i < $nargs ; $i++ ) {
+	    print OUT "    args[$i] = (unsigned long)a$i;\n";
 	}
+	print OUT "    return ($type) __socketcall(SYS_\U${name}\E, args);\n";
+	print OUT "}\n\n";
+
+	print OUT "#endif\n";
+
+	close(OUT);
     } else {
 	die "$file:$.: Could not parse input\n";
     }
