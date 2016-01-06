@@ -58,7 +58,7 @@ klib-y += vsnprintf.o snprintf.o vsprintf.o sprintf.o \
 	  lrand48.o jrand48.o mrand48.o nrand48.o srand48.o seed48.o \
 	  inet/inet_ntoa.o inet/inet_aton.o inet/inet_addr.o \
 	  inet/inet_ntop.o inet/inet_pton.o inet/bindresvport.o \
-	  send.o recv.o \
+	  accept.o send.o recv.o \
 	  access.o chmod.o chown.o dup2.o mknod.o poll.o rename.o stat.o \
 	  lchown.o link.o rmdir.o unlink.o utimes.o lstat.o mkdir.o \
 	  readlink.o select.o symlink.o pipe.o \
