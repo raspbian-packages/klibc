@@ -156,10 +156,10 @@ static int nuke(const char *what)
 }
 
 const char *run_init(const char *realroot, const char *console,
-		     const char *drop_caps, const char *init,
+		     const char *drop_caps, bool dry_run, const char *init,
 		     char **initargs)
 {
-	struct stat rst, cst;
+	struct stat rst, cst, ist;
 	struct statfs sfs;
 	int confd;
 
@@ -186,13 +186,15 @@ const char *run_init(const char *realroot, const char *console,
 
 	/* Okay, I think we should be safe... */
 
-	/* Delete rootfs contents */
-	if (nuke_dir("/"))
-		return "nuking initramfs contents";
+	if (!dry_run) {
+		/* Delete rootfs contents */
+		if (nuke_dir("/"))
+			return "nuking initramfs contents";
 
-	/* Overmount the root */
-	if (mount(".", "/", NULL, MS_MOVE, NULL))
-		return "overmounting root";
+		/* Overmount the root */
+		if (mount(".", "/", NULL, MS_MOVE, NULL))
+			return "overmounting root";
+	}
 
 	/* chroot, chdir */
 	if (chroot(".") || chdir("/"))
@@ -205,12 +207,24 @@ const char *run_init(const char *realroot, const char *console,
 	/* Open /dev/console */
 	if ((confd = open(console, O_RDWR)) < 0)
 		return "opening console";
-	dup2(confd, 0);
-	dup2(confd, 1);
-	dup2(confd, 2);
+	if (!dry_run) {
+		dup2(confd, 0);
+		dup2(confd, 1);
+		dup2(confd, 2);
+	}
 	close(confd);
 
-	/* Spawn init */
-	execv(init, initargs);
-	return init;		/* Failed to spawn init */
+	if (!dry_run) {
+		/* Spawn init */
+		execv(init, initargs);
+		return init;		/* Failed to spawn init */
+	} else {
+		if (stat(init, &ist))
+			return init;
+		if (!S_ISREG(ist.st_mode) || !(ist.st_mode & S_IXUGO)) {
+			errno = EACCES;
+			return init;
+		}
+		return NULL;		/* Success */
+	}
 }

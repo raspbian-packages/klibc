@@ -28,7 +28,10 @@
 #ifndef RUN_INIT_H
 #define RUN_INIT_H
 
+#include <stdbool.h>
+
 const char *run_init(const char *realroot, const char *console,
-		     const char *drop_caps, const char *init, char **initargs);
+		     const char *drop_caps, bool dry_run,
+		     const char *init, char **initargs);
 
 #endif
