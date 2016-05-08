@@ -1,0 +1,57 @@
+From: Mauricio Faria de Oliveira <mauricfo@linux.vnet.ibm.com>
+Date: Tue, 09 Sep 2014 15:17:19 -0700
+Subject: [klibc] [PATCH] ppc64: ELFv2: Load TOC value in system call stub
+Forwarded: http://www.zytor.com/pipermail/klibc/2016-January/003878.html
+
+This fixes a segmentation fault in the system call's error handling path with
+dynamically-linked binaries on PowerPC64 little endian.  The system call stub
+wasn't loading up r2 with the appropriate TOC value in its global entry point.
+
+The r2 setup code comes from the FUNC_START macro in gcc [1] and an equivalent
+one can also be found in the LOCALENTRY macro in glibc [2].
+
+On the ELFv2 ABI (see [1]):
+ - The global entry point is expected to load up r2 with the appropriate TOC
+   value for this function.
+ - The local entry point expects r2 to be set up to the current TOC.
+
+The problem happened with dynamically-linked binaries because:
+ - the system call is an indirect call (via global entry point) from the binary
+   to the shared library, landing in the syscall stub  (which didn't load up r2
+   with the TOC of the shared library)
+ - its branch to __syscall_error is a direct call (via local entry point) within
+   the shared library, landing in the function (which expects r2 to be set up to
+   that TOC)
+ - when the function attempts to store errno (in an address relative to the TOC),
+   that address incorrectly pointed to a read-only segment -- segmentation fault.
+
+The problem didn't happen with statically-linked binaries because the TOC value
+wasn't different on that case.
+
+Thanks and credits to Alan Modra and Ulrich Weigand, for helping with this and
+pointing out the solution.
+
+[1] https://gcc.gnu.org/ml/gcc-patches/2013-11/msg01141.html
+[2] https://www.sourceware.org/ml/libc-alpha/2013-11/msg00315.html
+
+Signed-off-by: Mauricio Faria de Oliveira <mauricfo@linux.vnet.ibm.com>
+---
+ usr/klibc/arch/ppc64/sysstub.ph |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
+
+diff --git a/usr/klibc/arch/ppc64/sysstub.ph b/usr/klibc/arch/ppc64/sysstub.ph
+index b3f6e38..a0c6d41 100644
+--- a/usr/klibc/arch/ppc64/sysstub.ph
++++ b/usr/klibc/arch/ppc64/sysstub.ph
+@@ -18,6 +18,9 @@ sub make_sysstub($$$$$@) {
+ #if _CALL_ELF == 2
+ 	.type ${fname},\@function
+ ${fname}:
++0:	addis	2,12,(.TOC.-0b)\@ha
++	addi	2,2,(.TOC.-0b)\@l
++	.localentry ${fname},.-${fname}
+ #else
+ 	.section ".opd","aw"
+ 	.balign 8
+-- 
+1.7.1

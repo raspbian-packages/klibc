@@ -1,0 +1,71 @@
+From: Dejan Latinovic <Dejan.Latinovic@imgtec.com>
+Date: Thu, 5 Mar 2015 16:51:44 -0800
+Subject: [PATCH 2/3] add-mips64-support-arch-mips32
+Origin: https://git.kernel.org/cgit/libs/klibc/klibc.git/commit/?id=ccd50880175e79fb9bc544c96d72b8971303cc0a
+
+Description: Add mips64 support, using existing mips32 code.
+ - using mips32 assembler source files: pipe.S vfork.S syscall.S
+ - sysstub.ph: copied over from klibc/arch/mips
+---
+ usr/klibc/arch/mips64/Kbuild     | 11 +++++++++++
+ usr/klibc/arch/mips64/sysstub.ph | 29 +++++++++++++++++++++++++++++
+ 2 files changed, 40 insertions(+)
+ create mode 100644 usr/klibc/arch/mips64/sysstub.ph
+
+diff --git a/usr/klibc/arch/mips64/Kbuild b/usr/klibc/arch/mips64/Kbuild
+index 970c0f8..6fe3b53 100644
+--- a/usr/klibc/arch/mips64/Kbuild
++++ b/usr/klibc/arch/mips64/Kbuild
+@@ -1,3 +1,14 @@
+ #
+ # klibc files for mips64
+ #
++
++klib-y := ../mips/pipe.o ../mips/vfork.o setjmp.o ../mips/syscall.o
++
++klib-y += ../../libgcc/__clzsi2.o     ../../libgcc/__ashldi3.o
++klib-y += ../../libgcc/__ashrdi3.o    ../../libgcc/__lshrdi3.o
++klib-y += ../../libgcc/__divdi3.o     ../../libgcc/__moddi3.o
++klib-y += ../../libgcc/__udivdi3.o    ../../libgcc/__umoddi3.o
++klib-y += ../../libgcc/__udivmoddi4.o
++
++always  := crt0.o
++targets := crt0.o
+diff --git a/usr/klibc/arch/mips64/sysstub.ph b/usr/klibc/arch/mips64/sysstub.ph
+new file mode 100644
+index 0000000..e8a0200
+--- /dev/null
++++ b/usr/klibc/arch/mips64/sysstub.ph
+@@ -0,0 +1,29 @@
++# -*- perl -*-
++#
++# arch/mips64/sysstub.ph
++#
++# Script to generate system call stubs
++#
++
++# On MIPS, most system calls follow the standard convention, with the
++# system call number in r0 (v0), return an error value in r19 (a3) as
++# well as the return value in r0 (v0).
++
++sub make_sysstub($$$$$@) {
++    my($outputdir, $fname, $type, $sname, $stype, @args) = @_;
++
++    $stype = $stype || 'common';
++    open(OUT, '>', "${outputdir}/${fname}.S");
++    print OUT "#include <machine/asm.h>\n";
++    print OUT "#include <asm/unistd.h>\n";
++    print OUT "\n";
++    print OUT "\t.set noreorder\n";
++    print OUT "\n";
++    print OUT "LEAF(${fname})\n";
++    print OUT "\tj\t__syscall_${stype}\n";
++    print OUT "\t  li\tv0, __NR_${sname}\n";
++    print OUT "\tEND(${fname})\n";
++    close(OUT);
++}
++
++1;
+-- 
+2.4.5
+
