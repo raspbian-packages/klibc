@@ -1,0 +1,63 @@
+From: Ben Hutchings <ben@decadent.org.uk>
+Date: Sat, 27 Sep 2014 15:18:21 +0100
+Subject: readlink: Add -f option
+Bug-Debian: https://bugs.debian.org/763049
+Forwarded: http://www.zytor.com/pipermail/klibc/2016-January/003886.html
+
+This is needed to support mounting non-root filesystems in
+initramfs-tools.
+
+Signed-off-by: Ben Hutchings <ben@decadent.org.uk>
+---
+--- a/usr/utils/readlink.c
++++ b/usr/utils/readlink.c
+@@ -7,24 +7,45 @@ const char *progname;
+ 
+ static __noreturn usage(void)
+ {
+-	fprintf(stderr, "Usage: %s link...\n", progname);
++	fprintf(stderr, "Usage: %s [-f] link...\n", progname);
+ 	exit(1);
+ }
+ 
+ int main(int argc, char *argv[])
+ {
++	int c, f_flag = 0;
+ 	const char *name;
+ 	char link_name[PATH_MAX];
+ 	int rv;
+ 	int i;
+ 
+-	progname = *argv++;
++	progname = argv[0];
+ 
+-	if (argc < 2)
++	do {
++		c = getopt(argc, argv, "f");
++		if (c == EOF)
++			break;
++		switch (c) {
++		case 'f':
++			f_flag = 1;
++			break;
++
++		case '?':
++			fprintf(stderr, "%s: invalid option -%c\n",
++				progname, optopt);
++			usage();
++		}
++	} while (1);
++
++	if (optind == argc)
+ 		usage();
+ 
++	argv += optind;
+ 	while ((name = *argv++)) {
+-		rv = readlink(name, link_name, sizeof link_name - 1);
++		if (f_flag)
++			rv = realpath(name, link_name) ? strlen(link_name) : -1;
++		else
++			rv = readlink(name, link_name, sizeof link_name - 1);
+ 		if (rv < 0) {
+ 			perror(name);
+ 			exit(1);

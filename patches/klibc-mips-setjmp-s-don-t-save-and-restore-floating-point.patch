@@ -1,0 +1,55 @@
+From: YunQiang Su <wzssyqa@gmail.com>
+Date: Sat Sep  5 06:39:25 PDT 2015
+Subject: [klibc] mips/setjmp.S: don't save and restore floating-point registers
+Bug-Debian: https://bugs.debian.org/789683
+Forwarded: http://www.zytor.com/pipermail/klibc/2015-September/003833.html
+
+Klibc FTBFS with '-mno-odd-spreg' on mips32(el) platforms,
+As it try to save/restore odd-number FPR.
+
+Indeed no other architectures save/restore FPR at all.
+It shouldn't be needed.
+---
+ usr/klibc/arch/mips/setjmp.S | 24 ------------------------
+ 1 file changed, 24 deletions(-)
+
+--- a/usr/klibc/arch/mips/setjmp.S
++++ b/usr/klibc/arch/mips/setjmp.S
+@@ -29,18 +29,6 @@ LEAF(setjmp)
+ 	sw	s8, 40(a0)
+ 	sw	ra, 44(a0)
+ 	cfc1	t0,$31
+-	swc1	$f20,48(a0)
+-	swc1	$f21,52(a0)
+-	swc1	$f22,56(a0)
+-	swc1	$f23,60(a0)
+-	swc1	$f24,64(a0)
+-	swc1	$f25,68(a0)
+-	swc1	$f26,72(a0)
+-	swc1	$f27,76(a0)
+-	swc1	$f28,80(a0)
+-	swc1	$f29,84(a0)
+-	swc1	$f30,88(a0)
+-	swc1	$f31,92(a0)
+ 	sw	t0,96(a0)
+ 	move	v0,zero
+ 	jr	ra
+@@ -61,18 +49,6 @@ LEAF(longjmp)
+ 	lw	s8, 40(a0)
+ 	lw	ra, 44(a0)
+ 	lw	t0, 96(a0)
+-	lwc1	$f20,48(a0)
+-	lwc1	$f21,52(a0)
+-	lwc1	$f22,56(a0)
+-	lwc1	$f23,60(a0)
+-	lwc1	$f24,64(a0)
+-	lwc1	$f25,68(a0)
+-	lwc1	$f26,72(a0)
+-	lwc1	$f27,76(a0)
+-	lwc1	$f28,80(a0)
+-	lwc1	$f29,84(a0)
+-	lwc1	$f30,88(a0)
+-	lwc1	$f31,92(a0)
+ 	ctc1	t0,$31
+ 	move	v0,a1
+ 	jr	ra

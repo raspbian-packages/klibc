@@ -1,0 +1,192 @@
+From: Ben Hutchings <ben@decadent.org.uk>
+Date: Sun, 17 Jan 2016 19:50:28 +0000
+Subject: run-init: Add dry-run mode
+Bug-Debian: https://bugs.debian.org/810965
+
+initramfs-tools wants to validate the real init program before running
+it, as there is no way out once it has exec'd run-init.  This is
+complicated by the increasing use of symlinks for /sbin/init and for
+/sbin itself.  We can't simply resolve them with 'readlink -f' because
+any absolute symlinks will be resolved using the wrong root.  Add a
+dry-run mode (-n option) to run-init that goes as far as possible to
+validate that the given init is executable.
+
+Signed-off-by: Ben Hutchings <ben@decadent.org.uk>
+---
+--- a/usr/kinit/run-init/run-init.c
++++ b/usr/kinit/run-init/run-init.c
+@@ -26,19 +26,23 @@
+  * ----------------------------------------------------------------------- */
+ 
+ /*
+- * Usage: exec run-init [-d caps] [-c /dev/console] /real-root /sbin/init "$@"
++ * Usage: exec run-init [-d caps] [-c /dev/console] [-n] /real-root /sbin/init "$@"
+  *
+  * This program should be called as the last thing in a shell script
+  * acting as /init in an initramfs; it does the following:
+  *
+- * - Delete all files in the initramfs;
+- * - Remounts /real-root onto the root filesystem;
+- * - Drops comma-separated list of capabilities;
+- * - Chroots;
+- * - Opens /dev/console;
+- * - Spawns the specified init program (with arguments.)
++ * 1. Delete all files in the initramfs;
++ * 2. Remounts /real-root onto the root filesystem;
++ * 3. Drops comma-separated list of capabilities;
++ * 4. Chroots;
++ * 5. Opens /dev/console;
++ * 6. Spawns the specified init program (with arguments.)
++ *
++ * With the -n option, it skips steps 1, 2 and 6 and can be used to check
++ * whether the given root and init are likely to work.
+  */
+ 
++#include <stdbool.h>
+ #include <stdlib.h>
+ #include <stdio.h>
+ #include <unistd.h>
+@@ -51,7 +55,7 @@ static const char *program;
+ static void __attribute__ ((noreturn)) usage(void)
+ {
+ 	fprintf(stderr,
+-		"Usage: exec %s [-d caps] [-c consoledev] /real-root /sbin/init [args]\n",
++		"Usage: exec %s [-d caps] [-c consoledev] [-n] /real-root /sbin/init [args]\n",
+ 		program);
+ 	exit(1);
+ }
+@@ -64,6 +68,7 @@ int main(int argc, char *argv[])
+ 	const char *init;
+ 	const char *error;
+ 	const char *drop_caps = NULL;
++	bool dry_run = false;
+ 	char **initargs;
+ 
+ 	/* Variables... */
+@@ -72,11 +77,13 @@ int main(int argc, char *argv[])
+ 	/* Parse the command line */
+ 	program = argv[0];
+ 
+-	while ((o = getopt(argc, argv, "c:d:")) != -1) {
++	while ((o = getopt(argc, argv, "c:d:n")) != -1) {
+ 		if (o == 'c') {
+ 			console = optarg;
+ 		} else if (o == 'd') {
+ 			drop_caps = optarg;
++		} else if (o == 'n') {
++			dry_run = true;
+ 		} else {
+ 			usage();
+ 		}
+@@ -89,9 +96,13 @@ int main(int argc, char *argv[])
+ 	init = argv[optind + 1];
+ 	initargs = argv + optind + 1;
+ 
+-	error = run_init(realroot, console, drop_caps, init, initargs);
++	error = run_init(realroot, console, drop_caps, dry_run, init, initargs);
+ 
+-	/* If run_init returns, something went wrong */
+-	fprintf(stderr, "%s: %s: %s\n", program, error, strerror(errno));
+-	return 1;
++	if (error) {
++		fprintf(stderr, "%s: %s: %s\n", program, error, strerror(errno));
++		return 1;
++	} else {
++		/* Must have been a dry run */
++		return 0;
++	}
+ }
+--- a/usr/kinit/run-init/run-init.h
++++ b/usr/kinit/run-init/run-init.h
+@@ -28,7 +28,10 @@
+ #ifndef RUN_INIT_H
+ #define RUN_INIT_H
+ 
++#include <stdbool.h>
++
+ const char *run_init(const char *realroot, const char *console,
+-		     const char *drop_caps, const char *init, char **initargs);
++		     const char *drop_caps, bool dry_run,
++		     const char *init, char **initargs);
+ 
+ #endif
+--- a/usr/kinit/run-init/runinitlib.c
++++ b/usr/kinit/run-init/runinitlib.c
+@@ -156,10 +156,10 @@ static int nuke(const char *what)
+ }
+ 
+ const char *run_init(const char *realroot, const char *console,
+-		     const char *drop_caps, const char *init,
++		     const char *drop_caps, bool dry_run, const char *init,
+ 		     char **initargs)
+ {
+-	struct stat rst, cst;
++	struct stat rst, cst, ist;
+ 	struct statfs sfs;
+ 	int confd;
+ 
+@@ -186,13 +186,15 @@ const char *run_init(const char *realroo
+ 
+ 	/* Okay, I think we should be safe... */
+ 
+-	/* Delete rootfs contents */
+-	if (nuke_dir("/"))
+-		return "nuking initramfs contents";
+-
+-	/* Overmount the root */
+-	if (mount(".", "/", NULL, MS_MOVE, NULL))
+-		return "overmounting root";
++	if (!dry_run) {
++		/* Delete rootfs contents */
++		if (nuke_dir("/"))
++			return "nuking initramfs contents";
++
++		/* Overmount the root */
++		if (mount(".", "/", NULL, MS_MOVE, NULL))
++			return "overmounting root";
++	}
+ 
+ 	/* chroot, chdir */
+ 	if (chroot(".") || chdir("/"))
+@@ -205,12 +207,24 @@ const char *run_init(const char *realroo
+ 	/* Open /dev/console */
+ 	if ((confd = open(console, O_RDWR)) < 0)
+ 		return "opening console";
+-	dup2(confd, 0);
+-	dup2(confd, 1);
+-	dup2(confd, 2);
++	if (!dry_run) {
++		dup2(confd, 0);
++		dup2(confd, 1);
++		dup2(confd, 2);
++	}
+ 	close(confd);
+ 
+-	/* Spawn init */
+-	execv(init, initargs);
+-	return init;		/* Failed to spawn init */
++	if (!dry_run) {
++		/* Spawn init */
++		execv(init, initargs);
++		return init;		/* Failed to spawn init */
++	} else {
++		if (stat(init, &ist))
++			return init;
++		if (!S_ISREG(ist.st_mode) || !(ist.st_mode & S_IXUGO)) {
++			errno = EACCES;
++			return init;
++		}
++		return NULL;		/* Success */
++	}
+ }
+--- a/usr/kinit/kinit.c
++++ b/usr/kinit/kinit.c
+@@ -304,7 +304,7 @@ int main(int argc, char *argv[])
+ 	init_argv[0] = strrchr(init_path, '/') + 1;
+ 
+ 	errmsg = run_init("/root", "/dev/console",
+-			  get_arg(cmdc, cmdv, "drop_capabilities="),
++			  get_arg(cmdc, cmdv, "drop_capabilities="), false,
+ 			  init_path, init_argv);
+ 
+ 	/* If run_init returned, something went bad */
