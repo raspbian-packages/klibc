@@ -1,0 +1,42 @@
+From: Ben Hutchings <ben@decadent.org.uk>
+Date: Tue, 05 Jan 2016 21:11:41 +0000
+Subject: syscalls: Override detection of direct socket syscalls on i386, m68k, s390
+Bug-Debian: https://bugs.debian.org/809423
+Forwarded: http://www.zytor.com/pipermail/klibc/2016-January/003882.html
+
+The direct socket syscalls are now implemented on i386, m68k and s390,
+making socketcall() obsolete.  However we need to keep klibc/unstable
+working with the last stable kernel version (3.16) so we shouldn't use
+them yet.
+
+---
+--- a/usr/include/arch/i386/klibc/archconfig.h
++++ b/usr/include/arch/i386/klibc/archconfig.h
+@@ -15,4 +15,7 @@
+ /* We have __libc_arch_init() */
+ #define _KLIBC_HAS_ARCHINIT 1
+ 
++/* Use sys_socketcall unconditionally */
++#define _KLIBC_SYS_SOCKETCALL 1
++
+ #endif				/* _KLIBC_ARCHCONFIG_H */
+--- a/usr/include/arch/m68k/klibc/archconfig.h
++++ b/usr/include/arch/m68k/klibc/archconfig.h
+@@ -12,4 +12,7 @@
+ /* On m68k, sys_mmap2 uses the current page size as the shift factor */
+ #define _KLIBC_MMAP2_SHIFT	__getpageshift()
+ 
++/* Use sys_socketcall unconditionally */
++#define _KLIBC_SYS_SOCKETCALL 1
++
+ #endif				/* _KLIBC_ARCHCONFIG_H */
+--- a/usr/include/arch/s390/klibc/archconfig.h
++++ b/usr/include/arch/s390/klibc/archconfig.h
+@@ -12,4 +12,7 @@
+ /* Both s390 and s390x use the "32-bit" version of this structure */
+ #define _KLIBC_STATFS_F_TYPE_64 0
+ 
++/* Use sys_socketcall unconditionally */
++#define _KLIBC_SYS_SOCKETCALL 1
++
+ #endif				/* _KLIBC_ARCHCONFIG_H */
