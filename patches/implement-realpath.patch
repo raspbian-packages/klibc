@@ -1,0 +1,82 @@
+From: Ben Hutchings <ben@decadent.org.uk>
+Date: Sat, 27 Sep 2014 15:04:15 +0100
+Subject: [klibc] Implement realpath()
+Bug-Debian: https://bugs.debian.org/763049
+Forwarded: http://www.zytor.com/pipermail/klibc/2016-January/003885.html
+
+This is needed as the basis for the readlink -f option.
+
+Signed-off-by: Ben Hutchings <ben@decadent.org.uk>
+---
+--- a/usr/include/stdlib.h
++++ b/usr/include/stdlib.h
+@@ -92,4 +92,6 @@ static __inline__ int grantpt(int __fd)
+ 	return 0;		/* devpts does this all for us! */
+ }
+ 
++__extern char *realpath(const char *, char *);
++
+ #endif				/* _STDLIB_H */
+--- a/usr/klibc/Kbuild
++++ b/usr/klibc/Kbuild
+@@ -60,7 +60,7 @@ klib-y += vsnprintf.o snprintf.o vsprint
+ 	  send.o recv.o \
+ 	  access.o chmod.o chown.o dup2.o mknod.o poll.o rename.o stat.o \
+ 	  lchown.o link.o rmdir.o unlink.o utimes.o lstat.o mkdir.o \
+-	  readlink.o select.o symlink.o pipe.o \
++	  readlink.o realpath.o select.o symlink.o pipe.o \
+ 	  ctype/isalnum.o ctype/isalpha.o ctype/isascii.o \
+ 	  ctype/isblank.o ctype/iscntrl.o ctype/isdigit.o \
+ 	  ctype/isgraph.o ctype/islower.o ctype/isprint.o \
+--- /dev/null
++++ b/usr/klibc/realpath.c
+@@ -0,0 +1,49 @@
++#include <fcntl.h>
++#include <limits.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <sys/types.h>
++#include <unistd.h>
++
++/*
++ * Note that this requires name to refer to an existing file.  This is
++ * correct according to POSIX.  However, BSD and GNU implementations
++ * also allow name to refer to a non-existing file in an existing
++ * directory.
++ */
++
++char *realpath(const char *name, char *resolved_name)
++{
++	static const char proc_fd_prefix[] = "/proc/self/fd/";
++	char proc_fd_name[sizeof(proc_fd_prefix) + sizeof(int) * 3];
++	int allocated = 0;
++	int fd;
++	ssize_t len;
++
++	/* Open for path lookup only */
++	fd = open(name, O_PATH);
++	if (fd < 0)
++		return NULL;
++
++	if (!resolved_name) {
++		resolved_name = malloc(PATH_MAX);
++		if (!resolved_name)
++			goto out_close;
++		allocated = 1;
++	}
++
++	/* Use procfs to read back the resolved name */
++	sprintf(proc_fd_name, "%s%d", proc_fd_prefix, fd);
++	len = readlink(proc_fd_name, resolved_name, PATH_MAX - 1);
++	if (len < 0) {
++		if (allocated)
++			free(resolved_name);
++		resolved_name = NULL;
++	} else {
++		resolved_name[len] = 0;
++	}
++
++out_close:
++	close(fd);
++	return resolved_name;
++}

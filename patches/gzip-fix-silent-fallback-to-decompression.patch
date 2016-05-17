@@ -1,0 +1,85 @@
+From: Ben Hutchings <ben@decadent.org.uk>
+Date: Fri, 18 Sep 2015 21:59:17 +0200
+Subject: gzip: Fix silent fallback to decompression
+Bug-Debian: https://bugs.debian.org/355809
+Forwarded: http://www.zytor.com/pipermail/klibc/2016-January/003892.html
+
+If the gzip utilities are built without support for compression,
+they will always attempt to carry out decompression even if the
+command name and options don't imply that.  Instead they should
+fail with an explicit error in this case.
+
+Signed-off-by: Ben Hutchings <ben@decadent.org.uk>
+---
+--- a/usr/gzip/gzip.c
++++ b/usr/gzip/gzip.c
+@@ -90,8 +90,11 @@ int level = 6;        /* compression lev
+ #endif
+ 
+ int to_stdout;        /* output to stdout (-c) */
+-#ifndef decompress
++#ifdef decompress
++int decompress_wanted;
++#else
+ int decompress;       /* decompress (-d) */
++#define decompress_wanted decompress
+ #endif
+ int force;            /* don't ask questions, compress links (-f) */
+ int no_name = -1;     /* don't save or restore the original file name */
+@@ -259,17 +262,13 @@ int main (argc, argv)
+      * Systems which do not support links can still use -d or -dc.
+      * Ignore an .exe extension for MSDOS, OS/2 and VMS.
+      */
+-#ifndef decompress
+     if (  strncmp(progname, "un",  2) == 0     /* ungzip, uncompress */
+        || strncmp(progname, "gun", 3) == 0) {  /* gunzip */
+-	decompress = 1;
++	decompress_wanted = 1;
+     }
+-#endif
+     if (strequ(progname+1, "cat")       /* zcat, pcat, gcat */
+ 	|| strequ(progname, "gzcat")) {    /* gzcat */
+-#ifndef decompress
+-	decompress = 1;
+-#endif
++	decompress_wanted = 1;
+ 	to_stdout = 1;
+     }
+ #endif
+@@ -282,9 +281,7 @@ int main (argc, argv)
+ 	case 'c':
+ 	    to_stdout = 1; break;
+ 	case 'd':
+-#ifndef decompress
+-	    decompress = 1;
+-#endif
++	    decompress_wanted = 1;
+ 	    break;
+ 	case 'f':
+ 	    force++; break;
+@@ -308,9 +305,7 @@ int main (argc, argv)
+             break;
+ 	case 't':
+ 	    test = to_stdout = 1;
+-#ifndef decompress
+-	    decompress = 1;
+-#endif
++	    decompress_wanted = 1;
+ 	    break;
+ 	case 'v':
+ 	    verbose++; quiet = 0; break;
+@@ -329,6 +324,14 @@ int main (argc, argv)
+ 	}
+     } /* loop on all arguments */
+ 
++#ifndef SUPPORT_ZIP
++    if (!decompress_wanted) {
++	fprintf(stderr, "%s: this version does not support compression\n",
++		progname);
++	do_exit(ERROR);
++    }
++#endif
++
+     /* By default, save name and timestamp on compression but do not
+      * restore them on decompression.
+      */
