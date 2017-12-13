@@ -26,6 +26,7 @@ static uint8_t dhcp_params[] = {
 	28,			/* broadcast addr */
 	40,			/* NIS domain name (why?) */
 	119,			/* Domain Search Option */
+	121,			/* Classless Static Route Option (RFC3442) */
 };
 
 static uint8_t dhcp_discover_hdr[] = {

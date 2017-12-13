@@ -268,6 +268,87 @@ static char *bootp_ext119_decode(const void *ext, int16_t ext_size, void *tmp)
 }
 
 /*
+ * DESCRIPTION
+ *  bootp_ext121_decode() decodes Classless Route Option data.
+ *
+ * ARGUMENTS
+ *  const uint8_t *ext
+ *   *ext is a pointer to a DHCP Classless Route Option data.
+ *   For example, if *ext is {16, 192, 168, 192, 168, 42, 1},
+ *   this function returns a pointer to
+ *   {
+ *     subnet = 192.168.0.0;
+ *     netmask_width = 16;
+ *     gateway = 192.168.42.1;
+ *     next = NULL;
+ *   }
+ *
+ *  int16_t ext_size
+ *   ext_size is the memory size of *ext. For example,
+ *   if *ext is {16, 192, 168, 192, 168, 42, 1}, ext_size must be 7.
+ *
+ * RETURN VALUE
+ *  if OK, a pointer to a decoded struct route malloc-ed
+ *  else , NULL
+ *
+ * SEE ALSO RFC3442
+ */
+struct route *bootp_ext121_decode(const uint8_t *ext, int16_t ext_size)
+{
+	int16_t index = 0;
+	uint8_t netmask_width;
+	uint8_t significant_octets;
+	struct route *routes = NULL;
+	struct route *prev_route = NULL;
+
+	while (index < ext_size) {
+		netmask_width = ext[index];
+		index++;
+		if (netmask_width > 32) {
+			printf("IP-Config: Given Classless Route Option subnet mask width '%u' "
+		            "exceeds IPv4 limit of 32. Ignoring remaining option.\n",
+			        netmask_width);
+			return routes;
+		}
+		significant_octets = netmask_width / 8 + (netmask_width % 8 > 0);
+		if (ext_size - index < significant_octets + 4) {
+			printf("IP-Config: Given Classless Route Option remaining lengths (%u octets) "
+			        "is shorter than the expected %u octets. Ignoring remaining options.\n",
+			        ext_size - index, significant_octets + 4);
+			return routes;
+		}
+
+		struct route *route = malloc(sizeof(struct route));
+		if (route == NULL)
+			return routes;
+
+		/* convert only significant octets from byte array into integer in network byte order */
+		route->subnet = 0;
+		memcpy(&route->subnet, &ext[index], significant_octets);
+		index += significant_octets;
+		/* RFC3442 demands: After deriving a subnet number and subnet mask from
+		   each destination descriptor, the DHCP client MUST zero any bits in
+		   the subnet number where the corresponding bit in the mask is zero. */
+		route->subnet &= netdev_genmask(netmask_width);
+
+		/* convert octet array into network byte order */
+		memcpy(&route->gateway, &ext[index], 4);
+		index += 4;
+
+		route->netmask_width = netmask_width;
+		route->next = NULL;
+
+		if (prev_route == NULL) {
+			routes = route;
+		} else {
+			prev_route->next = route;
+		}
+		prev_route = route;
+	}
+	return routes;
+}
+
+/*
  * Parse a bootp reply packet
  */
 int bootp_parse(struct netdev *dev, struct bootp_hdr *hdr,
@@ -275,6 +356,8 @@ int bootp_parse(struct netdev *dev, struct bootp_hdr *hdr,
 {
 	uint8_t ext119_buf[BOOTP_EXTS_SIZE];
 	int16_t ext119_len = 0;
+	uint8_t ext121_buf[BOOTP_EXTS_SIZE];
+	int16_t ext121_len = 0;
 
 	dev->bootp.gateway	= hdr->giaddr;
 	dev->ip_addr		= hdr->yiaddr;
@@ -368,6 +451,16 @@ int bootp_parse(struct netdev *dev, struct bootp_hdr *hdr,
 					ext119_len = -1;
 
 				break;
+			case 121:	/* Classless Static Route Option (RFC3442) */
+				if (ext121_len >= 0 &&
+				    ext121_len + len <= sizeof(ext121_buf)) {
+					memcpy(ext121_buf + ext121_len,
+					       ext, len);
+					ext121_len += len;
+				} else
+					ext121_len = -1;
+
+				break;
 			}
 
 			ext += len;
@@ -382,6 +475,22 @@ int bootp_parse(struct netdev *dev, struct bootp_hdr *hdr,
 			if (dev->domainsearch != NULL)
 				free(dev->domainsearch);
 			dev->domainsearch = ret;
+		}
+	}
+
+	if (ext121_len > 0) {
+		struct route *ret;
+
+		ret = bootp_ext121_decode(ext121_buf, ext121_len);
+		if (ret != NULL) {
+			struct route *cur = dev->routes;
+			struct route *next;
+			while (cur != NULL) {
+				next = cur->next;
+				free(cur);
+				cur = next;
+			}
+			dev->routes = ret;
 		}
 	}
 
