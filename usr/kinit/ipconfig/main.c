@@ -71,6 +71,8 @@ static inline const char *my_inet_ntoa(uint32_t addr)
 
 static void print_device_config(struct netdev *dev)
 {
+	int dns0_spaces;
+	int dns1_spaces;
 	printf("IP-Config: %s complete", dev->name);
 	if (dev->proto == PROTO_BOOTP || dev->proto == PROTO_DHCP)
 		printf(" (%s from %s)", protoinfos[dev->proto].name,
@@ -80,9 +82,27 @@ static void print_device_config(struct netdev *dev)
 	printf(":\n address: %-16s ", my_inet_ntoa(dev->ip_addr));
 	printf("broadcast: %-16s ", my_inet_ntoa(dev->ip_broadcast));
 	printf("netmask: %-16s\n", my_inet_ntoa(dev->ip_netmask));
-	printf(" gateway: %-16s ", my_inet_ntoa(dev->ip_gateway));
-	printf("dns0     : %-16s ", my_inet_ntoa(dev->ip_nameserver[0]));
-	printf("dns1   : %-16s\n", my_inet_ntoa(dev->ip_nameserver[1]));
+	if (dev->routes != NULL) {
+		struct route *cur;
+		char *delim = "";
+		printf(" routes :");
+		for (cur = dev->routes; cur != NULL; cur = cur->next) {
+			printf("%s %s/%u", delim, my_inet_ntoa(cur->subnet), cur->netmask_width);
+			if (cur->gateway != 0) {
+				printf(" via %s", my_inet_ntoa(cur->gateway));
+			}
+			delim = ",";
+		}
+		printf("\n");
+		dns0_spaces = 3;
+		dns1_spaces = 5;
+	} else {
+		printf(" gateway: %-16s", my_inet_ntoa(dev->ip_gateway));
+		dns0_spaces = 5;
+		dns1_spaces = 3;
+	}
+	printf(" dns0%*c: %-16s", dns0_spaces, ' ', my_inet_ntoa(dev->ip_nameserver[0]));
+	printf(" dns1%*c: %-16s\n", dns1_spaces, ' ', my_inet_ntoa(dev->ip_nameserver[1]));
 	if (dev->hostname[0])
 		printf(" host   : %-64s\n", dev->hostname);
 	if (dev->dnsdomainname[0])
@@ -106,8 +126,8 @@ static void configure_device(struct netdev *dev)
 	if (netdev_setaddress(dev))
 		printf("IP-Config: failed to set addresses on %s\n",
 		       dev->name);
-	if (netdev_setdefaultroute(dev))
-		printf("IP-Config: failed to set default route on %s\n",
+	if (netdev_setroutes(dev))
+		printf("IP-Config: failed to set routes on %s\n",
 		       dev->name);
 	if (dev->hostname[0] &&
 			sethostname(dev->hostname, strlen(dev->hostname)))
@@ -161,8 +181,24 @@ static void dump_device_config(struct netdev *dev)
 				my_inet_ntoa(dev->ip_broadcast));
 		write_option(f, "IPV4NETMASK",
 				my_inet_ntoa(dev->ip_netmask));
-		write_option(f, "IPV4GATEWAY",
-				my_inet_ntoa(dev->ip_gateway));
+		if (dev->routes != NULL) {
+			/* Use 6 digits to encode the index */
+			char key[23];
+			char value[19];
+			int i = 0;
+			struct route *cur;
+			for (cur = dev->routes; cur != NULL; cur = cur->next) {
+				snprintf(key, sizeof(key), "IPV4ROUTE%iSUBNET", i);
+				snprintf(value, sizeof(value), "%s/%u", my_inet_ntoa(cur->subnet), cur->netmask_width);
+				write_option(f, key, value);
+				snprintf(key, sizeof(key), "IPV4ROUTE%iGATEWAY", i);
+				write_option(f, key, my_inet_ntoa(cur->gateway));
+				i++;
+			}
+		} else {
+			write_option(f, "IPV4GATEWAY",
+					my_inet_ntoa(dev->ip_gateway));
+		}
 		write_option(f, "IPV4DNS0",
 				my_inet_ntoa(dev->ip_nameserver[0]));
 		write_option(f, "IPV4DNS1",
@@ -545,7 +581,7 @@ bail:
 
 static int add_all_devices(struct netdev *template);
 
-static int parse_device(struct netdev *dev, const char *ip)
+static int parse_device(struct netdev *dev, char *ip)
 {
 	char *cp;
 	int opt;
@@ -658,7 +694,7 @@ static void bringup_one_dev(struct netdev *template, struct netdev *dev)
 	bringup_device(dev);
 }
 
-static struct netdev *add_device(const char *info)
+static struct netdev *add_device(char *info)
 {
 	struct netdev *dev;
 	int i;
