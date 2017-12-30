@@ -1,0 +1,124 @@
+From: Dejan Latinovic <Dejan.Latinovic@imgtec.com>
+Date: Thu, 5 Mar 2015 16:51:45 -0800
+Subject: [PATCH 3/3] add-mips64-support-arch-mips64-specific
+Origin: https://git.kernel.org/cgit/libs/klibc/klibc.git/commit/?id=3438d861da2e6939a6b0d454ffe247c19ead5993
+
+Description: Adding mips64 specific chagnes.
+Modeled on mips 32 and adapted for 64 bit ABI.
+ - MCONFIG:  using existing klibc.ld scrpit
+ - crt0.S:   adapted gp initialization
+ - setjmp.S: do not save floating-point state
+---
+ usr/klibc/arch/mips64/MCONFIG  |  2 ++
+ usr/klibc/arch/mips64/crt0.S   | 31 ++++++++++++++++++++++++++
+ usr/klibc/arch/mips64/setjmp.S | 50 ++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 83 insertions(+)
+ create mode 100644 usr/klibc/arch/mips64/crt0.S
+ create mode 100644 usr/klibc/arch/mips64/setjmp.S
+
+diff --git a/usr/klibc/arch/mips64/MCONFIG b/usr/klibc/arch/mips64/MCONFIG
+index 5c50b8d..b37cc6a 100644
+--- a/usr/klibc/arch/mips64/MCONFIG
++++ b/usr/klibc/arch/mips64/MCONFIG
+@@ -9,3 +9,5 @@
+ 
+ KLIBCOPTFLAGS += -Os
+ KLIBCBITSIZE  = 64
++
++KLIBCSHAREDFLAGS  = -T $(src)/arch/mips/klibc.ld
+diff --git a/usr/klibc/arch/mips64/crt0.S b/usr/klibc/arch/mips64/crt0.S
+new file mode 100644
+index 0000000..775a919
+--- /dev/null
++++ b/usr/klibc/arch/mips64/crt0.S
+@@ -0,0 +1,31 @@
++#
++# arch/mips64/crt0.S
++#
++# Does arch-specific initialization and invokes __libc_init
++# with the appropriate arguments.
++#
++# See __static_init.c or __shared_init.c for the expected
++# arguments.
++#
++
++#include <machine/asm.h>
++
++NESTED(__start, 64, sp)
++	daddiu  sp,sp,-64
++	sd	zero, 32(sp)
++
++					# Initialize gp
++	lui gp,%highest(_gp) 		# load highest "halfword"
++	daddiu gp,gp,%higher(_gp) 	# merge next "halfword"
++	dsll gp,gp,16 			# shift by one halfword
++	daddiu gp,gp,%hi(_gp) 		# merge next "halfword"
++	dsll gp,gp,16 			# shift into final position
++	daddiu gp,gp,%lo(_gp) 		# merge lowest "halfword"
++
++	daddiu	a0, sp, 64		# Pointer to ELF entry structure
++	move	a1, v0			# Kernel-provided atexit() pointer
++
++	ld  t9, %call16(__libc_init)(gp)
++	jalr t9
++
++	END(__start)
+diff --git a/usr/klibc/arch/mips64/setjmp.S b/usr/klibc/arch/mips64/setjmp.S
+new file mode 100644
+index 0000000..5d902e2
+--- /dev/null
++++ b/usr/klibc/arch/mips64/setjmp.S
+@@ -0,0 +1,50 @@
++#
++# arch/mips64/setjmp.S
++#
++# setjmp/longjmp for the MIPS architecture
++#
++# The jmp_buf is assumed to contain the following, in order:
++#	s0..s7
++#	gp
++#	sp
++#	s8
++#	ra
++#
++
++#include <machine/asm.h>
++
++LEAF(setjmp)
++	sd	s0,  0(a0)
++	sd	s1,  8(a0)
++	sd	s2, 16(a0)
++	sd	s3, 24(a0)
++	sd	s4, 32(a0)
++	sd	s5, 40(a0)
++	sd	s6, 48(a0)
++	sd	s7, 56(a0)
++	sd	gp, 64(a0)
++	sd	sp, 72(a0)
++	sd	s8, 80(a0)
++	sd	ra, 88(a0)
++	move	v0, zero
++	jr	ra
++
++	END(setjmp)
++
++LEAF(longjmp)
++	ld	s0,  0(a0)
++	ld	s1,  8(a0)
++	ld	s2, 16(a0)
++	ld	s3, 24(a0)
++	ld	s4, 32(a0)
++	ld	s5, 40(a0)
++	ld	s6, 48(a0)
++	ld	s7, 56(a0)
++	ld	gp, 64(a0)
++	ld	sp, 72(a0)
++	ld	s8, 80(a0)
++	ld	ra, 88(a0)
++	move	v0, a1
++	jr	ra
++
++	END(longjmp)
+-- 
+2.4.5
+
