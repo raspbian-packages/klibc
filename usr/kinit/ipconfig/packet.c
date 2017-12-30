@@ -1,3 +1,4 @@
+#include <errno.h>/*XXX*/
 /*
  * Packet socket handling glue.
  */
@@ -20,17 +21,13 @@
 #include "netdev.h"
 #include "packet.h"
 
-static int pkt_fd = -1;
-
 uint16_t cfg_local_port = LOCAL_PORT;
 uint16_t cfg_remote_port = REMOTE_PORT;
 
-int packet_open(void)
+int packet_open(struct netdev *dev)
 {
-	int fd, one = 1;
-
-	if (pkt_fd != -1)
-		return pkt_fd;
+	struct sockaddr_ll sll;
+	int fd, rv, one = 1;
 
 	/*
 	 * Get a PACKET socket for IP traffic.
@@ -48,18 +45,28 @@ int packet_open(void)
 		       sizeof(one)) == -1) {
 		perror("SO_BROADCAST");
 		close(fd);
-		fd = -1;
+		return -1;
 	}
 
-	pkt_fd = fd;
+	memset(&sll, 0, sizeof(sll));
+	sll.sll_family = AF_PACKET;
+	sll.sll_ifindex = dev->ifindex;
 
+	rv = bind(fd, (struct sockaddr *)&sll, sizeof(sll));
+	if (-1 == rv) {
+		perror("bind");
+		close(fd);
+		return -1;
+	}
+
+	dev->pkt_fd = fd;
 	return fd;
 }
 
-void packet_close(void)
+void packet_close(struct netdev *dev)
 {
-	close(pkt_fd);
-	pkt_fd = -1;
+	close(dev->pkt_fd);
+	dev->pkt_fd = -1;
 }
 
 static unsigned int ip_checksum(uint16_t *hdr, int len)
@@ -163,7 +170,7 @@ int packet_send(struct netdev *dev, struct iovec *iov, int iov_len)
 
 	dprintf("\n   bytes %d\n", len);
 
-	return sendmsg(pkt_fd, &msg, 0);
+	return sendmsg(dev->pkt_fd, &msg, 0);
 }
 
 void packet_discard(struct netdev *dev)
@@ -174,7 +181,7 @@ void packet_discard(struct netdev *dev)
 
 	sll.sll_ifindex = dev->ifindex;
 
-	recvfrom(pkt_fd, &iph, sizeof(iph), 0,
+	recvfrom(dev->pkt_fd, &iph, sizeof(iph), 0,
 		 (struct sockaddr *)&sll, &sllen);
 }
 
@@ -207,7 +214,7 @@ int packet_recv(struct netdev *dev, struct iovec *iov, int iov_len)
 	msg.msg_name = &sll;
 	msg.msg_namelen = sllen;
 
-	ret = recvfrom(pkt_fd, &iph, sizeof(struct iphdr),
+	ret = recvfrom(dev->pkt_fd, &iph, sizeof(struct iphdr),
 		       MSG_PEEK, (struct sockaddr *)&sll, &sllen);
 	if (ret == -1)
 		return -1;
@@ -226,7 +233,7 @@ int packet_recv(struct netdev *dev, struct iovec *iov, int iov_len)
 	iov[0].iov_base = ip;
 	iov[0].iov_len = iphl + sizeof(struct udphdr);
 
-	ret = recvmsg(pkt_fd, &msg, 0);
+	ret = recvmsg(dev->pkt_fd, &msg, 0);
 	if (ret == -1)
 		goto free_pkt;
 

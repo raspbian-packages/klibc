@@ -45,6 +45,7 @@ struct netdev {
 	char filename[FNLEN];   /* filename             */
 	char *domainsearch;	/* decoded, NULL or malloc-ed  */
 	long uptime;		/* when complete configuration */
+	int pkt_fd;		/* packet socket for this interface */
 	struct netdev *next;	/* next configured i/f  */
 };
 
