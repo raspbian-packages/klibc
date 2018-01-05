@@ -7,45 +7,24 @@ const char *progname;
 
 static __noreturn usage(void)
 {
-	fprintf(stderr, "Usage: %s [-f] link...\n", progname);
+	fprintf(stderr, "Usage: %s link...\n", progname);
 	exit(1);
 }
 
 int main(int argc, char *argv[])
 {
-	int c, f_flag = 0;
 	const char *name;
 	char link_name[PATH_MAX];
 	int rv;
 	int i;
 
-	progname = argv[0];
+	progname = *argv++;
 
-	do {
-		c = getopt(argc, argv, "f");
-		if (c == EOF)
-			break;
-		switch (c) {
-		case 'f':
-			f_flag = 1;
-			break;
-
-		case '?':
-			fprintf(stderr, "%s: invalid option -%c\n",
-				progname, optopt);
-			usage();
-		}
-	} while (1);
-
-	if (optind == argc)
+	if (argc < 2)
 		usage();
 
-	argv += optind;
 	while ((name = *argv++)) {
-		if (f_flag)
-			rv = realpath(name, link_name) ? strlen(link_name) : -1;
-		else
-			rv = readlink(name, link_name, sizeof link_name - 1);
+		rv = readlink(name, link_name, sizeof link_name - 1);
 		if (rv < 0) {
 			perror(name);
 			exit(1);

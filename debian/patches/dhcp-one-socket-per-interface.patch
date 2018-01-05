@@ -1,0 +1,272 @@
+Author: Jay Vosburgh <jay.vosburgh@canonical.com>
+Description: Use separate sockets for DHCP from multiple interfaces
+ Previously ipconfig would use a single multiplexed packet socket to listen
+ for DHCP responses on multiple interfaces.  This fails if the interface that
+ responds is not the first one enumerated by the kernel, because ipconfig
+ looks for responses in interface order and is throwing them away if they're
+ not a proper match.
+ .
+ Fix this by using a separate socket for each interface so that each response
+ is processed in a correct context.
+Bug-Debian: http://bugs.debian.org/852480
+Bug-Ubuntu: https://bugs.launchpad.net/bugs/1652348
+
+diff --git a/usr/kinit/ipconfig/main.c b/usr/kinit/ipconfig/main.c
+index 7be2a1fcb5af..e00f049173fb 100644
+--- a/usr/kinit/ipconfig/main.c
++++ b/usr/kinit/ipconfig/main.c
+@@ -30,6 +30,7 @@ static unsigned int default_caps = CAP_DHCP | CAP_BOOTP | CAP_RARP;
+ static int loop_timeout = -1;
+ static int configured;
+ static int bringup_first = 0;
++static int n_devices = 0;
+ 
+ /* DHCP vendor class identifier */
+ char vendor_class_identifier[260];
+@@ -220,6 +221,7 @@ static void complete_device(struct netdev *dev)
+ 	configure_device(dev);
+ 	dump_device_config(dev);
+ 	print_device_config(dev);
++	packet_close(dev);
+ 
+ 	++configured;
+ 
+@@ -374,34 +376,35 @@ struct netdev *ifaces;
+  *  0 = No dhcp/bootp packet was received
+  *  1 = A packet was received and handled
+  */
+-static int do_pkt_recv(int pkt_fd, time_t now)
++static int do_pkt_recv(int nr, struct pollfd *fds, time_t now)
+ {
+-	int ret = 0;
++	int i, ret = 0;
+ 	struct state *s;
+ 
+-	for (s = slist; s; s = s->next)
+-		ret |= process_receive_event(s, now);
++	for (i = 0, s = slist; s && nr; s = s->next, i++) {
++		if (fds[i].revents & POLLRDNORM) {
++			ret |= process_receive_event(s, now);
++			nr--;
++		}
++	}
+ 	return ret;
+ }
+ 
+ static int loop(void)
+ {
+-#define NR_FDS	1
+-	struct pollfd fds[NR_FDS];
++	struct pollfd *fds;
+ 	struct state *s;
+-	int pkt_fd;
+-	int nr = 0, rc = 0;
++	int i, nr = 0, rc = 0;
+ 	struct timeval now, prev;
+ 	time_t start;
+ 
+-	pkt_fd = packet_open();
+-	if (pkt_fd == -1) {
+-		perror("packet_open");
+-		return -1;
++	fds = malloc(sizeof(struct pollfd) * n_devices);
++	if (!fds) {
++		fprintf(stderr, "malloc failed\n");
++		goto bail;
+ 	}
+ 
+-	fds[0].fd = pkt_fd;
+-	fds[0].events = POLLRDNORM;
++	memset(fds, 0, sizeof(*fds));
+ 
+ 	gettimeofday(&now, NULL);
+ 	start = now.tv_sec;
+@@ -412,9 +415,12 @@ static int loop(void)
+ 		int timeout_ms;
+ 		int x;
+ 
+-		for (s = slist; s; s = s->next) {
++		for (i = 0, s = slist; s; s = s->next, i++) {
+ 			dprintf("%s: state = %d\n", s->dev->name, s->state);
+ 
++			fds[i].fd = s->dev->pkt_fd;
++			fds[i].events = POLLRDNORM;
++
+ 			if (s->state == DEVST_COMPLETE) {
+ 				done++;
+ 				continue;
+@@ -442,14 +448,12 @@ static int loop(void)
+ 			if (timeout_ms <= 0)
+ 				timeout_ms = 100;
+ 
+-			nr = poll(fds, NR_FDS, timeout_ms);
++			nr = poll(fds, n_devices, timeout_ms);
+ 			prev = now;
+ 			gettimeofday(&now, NULL);
+ 
+-			if ((nr > 0) && (fds[0].revents & POLLRDNORM)) {
+-				if (do_pkt_recv(pkt_fd, now.tv_sec) == 1)
+-					break;
+-			}
++			if ((nr > 0) && do_pkt_recv(nr, fds, now.tv_sec))
++				break;
+ 
+ 			if (loop_timeout >= 0 &&
+ 			    now.tv_sec - start >= loop_timeout) {
+@@ -468,8 +472,8 @@ static int loop(void)
+ 		}
+ 	}
+ bail:
+-	packet_close();
+-
++	if (fds)
++		free(fds);
+ 	return rc;
+ }
+ 
+@@ -498,6 +502,8 @@ static int add_one_dev(struct netdev *dev)
+ 	state->next = slist;
+ 	slist = state;
+ 
++	n_devices++;
++
+ 	return 0;
+ }
+ 
+@@ -675,6 +681,9 @@ static struct netdev *add_device(const char *info)
+ 	if (bootp_init_if(dev) == -1)
+ 		goto bail;
+ 
++	if (packet_open(dev) == -1)
++		goto bail;
++
+ 	printf("IP-Config: %s hardware address", dev->name);
+ 	for (i = 0; i < dev->hwlen; i++)
+ 		printf("%c%02x", i == 0 ? ' ' : ':', dev->hwaddr[i]);
+diff --git a/usr/kinit/ipconfig/netdev.h b/usr/kinit/ipconfig/netdev.h
+index cd853b6c078b..4b75a65ad067 100644
+--- a/usr/kinit/ipconfig/netdev.h
++++ b/usr/kinit/ipconfig/netdev.h
+@@ -45,6 +45,7 @@ struct netdev {
+ 	char filename[FNLEN];   /* filename             */
+ 	char *domainsearch;	/* decoded, NULL or malloc-ed  */
+ 	long uptime;		/* when complete configuration */
++	int pkt_fd;		/* packet socket for this interface */
+ 	struct netdev *next;	/* next configured i/f  */
+ };
+ 
+diff --git a/usr/kinit/ipconfig/packet.c b/usr/kinit/ipconfig/packet.c
+index 446073aba2ae..200180109f2d 100644
+--- a/usr/kinit/ipconfig/packet.c
++++ b/usr/kinit/ipconfig/packet.c
+@@ -1,3 +1,4 @@
++#include <errno.h>/*XXX*/
+ /*
+  * Packet socket handling glue.
+  */
+@@ -20,17 +21,13 @@
+ #include "netdev.h"
+ #include "packet.h"
+ 
+-static int pkt_fd = -1;
+-
+ uint16_t cfg_local_port = LOCAL_PORT;
+ uint16_t cfg_remote_port = REMOTE_PORT;
+ 
+-int packet_open(void)
++int packet_open(struct netdev *dev)
+ {
+-	int fd, one = 1;
+-
+-	if (pkt_fd != -1)
+-		return pkt_fd;
++	struct sockaddr_ll sll;
++	int fd, rv, one = 1;
+ 
+ 	/*
+ 	 * Get a PACKET socket for IP traffic.
+@@ -48,18 +45,28 @@ int packet_open(void)
+ 		       sizeof(one)) == -1) {
+ 		perror("SO_BROADCAST");
+ 		close(fd);
+-		fd = -1;
++		return -1;
+ 	}
+ 
+-	pkt_fd = fd;
++	memset(&sll, 0, sizeof(sll));
++	sll.sll_family = AF_PACKET;
++	sll.sll_ifindex = dev->ifindex;
++
++	rv = bind(fd, (struct sockaddr *)&sll, sizeof(sll));
++	if (-1 == rv) {
++		perror("bind");
++		close(fd);
++		return -1;
++	}
+ 
++	dev->pkt_fd = fd;
+ 	return fd;
+ }
+ 
+-void packet_close(void)
++void packet_close(struct netdev *dev)
+ {
+-	close(pkt_fd);
+-	pkt_fd = -1;
++	close(dev->pkt_fd);
++	dev->pkt_fd = -1;
+ }
+ 
+ static unsigned int ip_checksum(uint16_t *hdr, int len)
+@@ -163,7 +170,7 @@ int packet_send(struct netdev *dev, struct iovec *iov, int iov_len)
+ 
+ 	dprintf("\n   bytes %d\n", len);
+ 
+-	return sendmsg(pkt_fd, &msg, 0);
++	return sendmsg(dev->pkt_fd, &msg, 0);
+ }
+ 
+ void packet_discard(struct netdev *dev)
+@@ -174,7 +181,7 @@ void packet_discard(struct netdev *dev)
+ 
+ 	sll.sll_ifindex = dev->ifindex;
+ 
+-	recvfrom(pkt_fd, &iph, sizeof(iph), 0,
++	recvfrom(dev->pkt_fd, &iph, sizeof(iph), 0,
+ 		 (struct sockaddr *)&sll, &sllen);
+ }
+ 
+@@ -207,7 +214,7 @@ int packet_recv(struct netdev *dev, struct iovec *iov, int iov_len)
+ 	msg.msg_name = &sll;
+ 	msg.msg_namelen = sllen;
+ 
+-	ret = recvfrom(pkt_fd, &iph, sizeof(struct iphdr),
++	ret = recvfrom(dev->pkt_fd, &iph, sizeof(struct iphdr),
+ 		       MSG_PEEK, (struct sockaddr *)&sll, &sllen);
+ 	if (ret == -1)
+ 		return -1;
+@@ -226,7 +233,7 @@ int packet_recv(struct netdev *dev, struct iovec *iov, int iov_len)
+ 	iov[0].iov_base = ip;
+ 	iov[0].iov_len = iphl + sizeof(struct udphdr);
+ 
+-	ret = recvmsg(pkt_fd, &msg, 0);
++	ret = recvmsg(dev->pkt_fd, &msg, 0);
+ 	if (ret == -1)
+ 		goto free_pkt;
+ 
+diff --git a/usr/kinit/ipconfig/packet.h b/usr/kinit/ipconfig/packet.h
+index f6cef5210958..4367efe1428e 100644
+--- a/usr/kinit/ipconfig/packet.h
++++ b/usr/kinit/ipconfig/packet.h
+@@ -3,8 +3,8 @@
+ 
+ struct iovec;
+ 
+-int packet_open(void);
+-void packet_close(void);
++int packet_open(struct netdev *dev);
++void packet_close(struct netdev *dev);
+ int packet_send(struct netdev *dev, struct iovec *iov, int iov_len);
+ void packet_discard(struct netdev *dev);
+ int packet_recv(struct netdev *dev, struct iovec *iov, int iov_len);

@@ -15,7 +15,4 @@
 /* We have __libc_arch_init() */
 #define _KLIBC_HAS_ARCHINIT 1
 
-/* Use sys_socketcall unconditionally */
-#define _KLIBC_SYS_SOCKETCALL 1
-
 #endif				/* _KLIBC_ARCHCONFIG_H */

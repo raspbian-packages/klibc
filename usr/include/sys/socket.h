@@ -251,6 +251,7 @@ __extern int bind(int, const struct sockaddr *, int);
 __extern int connect(int, const struct sockaddr *, socklen_t);
 __extern int listen(int, int);
 __extern int accept(int, struct sockaddr *, socklen_t *);
+__extern int accept4(int, struct sockaddr *, socklen_t *, int);
 __extern int getsockname(int, struct sockaddr *, socklen_t *);
 __extern int getpeername(int, struct sockaddr *, socklen_t *);
 __extern int socketpair(int, int, int, int *);

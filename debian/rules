@@ -3,8 +3,8 @@
 # let debhelper be verbose
 #export DH_VERBOSE=1
 
-DEB_HOST_ARCH := $(shell dpkg-architecture -qDEB_HOST_ARCH)
-export DEB_HOST_MULTIARCH := $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+include /usr/share/dpkg/architecture.mk
+export DEB_HOST_MULTIARCH
 
 ifeq ($(DEB_HOST_ARCH),armel)
 DEB_MAKE_ENVVARS := ARCH=arm CONFIG_AEABI=y
@@ -42,8 +42,6 @@ endif
 
 DEB_MAKE_ENVVARS := INSTALLROOT=debian/tmp $(DEB_MAKE_ENVVARS)
 
-DEB_BUILD_GNU_TYPE := $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
-DEB_HOST_GNU_TYPE  := $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 ifneq ($(DEB_HOST_GNU_TYPE),$(DEB_BUILD_GNU_TYPE))
     DEB_MAKE_ENVVARS += CROSS_COMPILE=$(DEB_HOST_GNU_TYPE)-
 endif

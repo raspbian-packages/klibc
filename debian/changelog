@@ -1,9 +1,42 @@
-klibc (2.0.4-9+rpi1) stretch-staging; urgency=medium
+klibc (2.0.4-11+rpi1) buster-staging; urgency=medium
 
   [changes brought forward from 2.0.4-2+rpi1 by Peter Michael Green <plugwash@p10link.net> at Wed, 26 Nov 2014 22:01:00 +0000]
   * Change compiler settings to values suitable for raspberry pi
 
- -- Raspbian forward porter <root@raspbian.org>  Tue, 17 May 2016 23:45:58 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Fri, 05 Jan 2018 14:58:59 +0000
+
+klibc (2.0.4-11) unstable; urgency=medium
+
+  * Apply i386 syscall changes from upstream (fixes FTBFS):
+    - [klibc] i386: remove special handling of socketcall
+    - [klibc] Add accept4(), handle fallback from accept() to accept4()
+
+ -- Ben Hutchings <ben@decadent.org.uk>  Sat, 30 Dec 2017 22:09:36 +0000
+
+klibc (2.0.4-10) unstable; urgency=medium
+
+  [ Steve Langasek ]
+  * debian/patches/broadcast_dhcp_send.patch: Set broadcast when sending
+    DHCPREQUEST and DHCPDISCOVER.  Thanks to Mathieu Trudel-Lapierre
+    <mathieu.trudel-lapierre@canonical.com>.  Closes: #733988, LP:
+    #1327412.
+  * debian/patches/dhcp-one-socket-per-interface.patch: Use separate
+    sockets for DHCP from multiple interfaces.  Thanks to Jay Vosburgh
+    <jay.vosburgh@canonical.com>.  Closes: #852480, LP: #1652348.
+
+  [ Ben Hutchings ]
+  * Drop patches no longer required after stretch release:
+    - "Fix minimal mv to work across fs"
+    - "Implement realpath()" and "readlink: Add -f option"
+    - "syscalls: Override detection of direct socket syscalls on i386, m68k,
+      s390"
+  * Replace diversion of initramfs-tools' klibc hook script with versioned
+    Breaks
+  * debian/control: Bump Standards-Version to 4.1.2; no changes required
+  * debian/rules: Use /usr/share/dpkg/architecture.mk
+  * Use debhelper compatibility level 9
+
+ -- Ben Hutchings <ben@decadent.org.uk>  Fri, 29 Dec 2017 00:58:39 +0000
 
 klibc (2.0.4-9) unstable; urgency=medium
 
