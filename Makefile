@@ -158,7 +158,7 @@ FORCE: ;
 ###
 # clean: remove generated files
 # mrproper does a full cleaning including .config and linux symlink
-FIND_IGNORE := \( -name .git \) -prune -o
+FIND_IGNORE := \( -name .git -o -name .pc \) -prune -o
 quiet_cmd_rmfiles = $(if $(wildcard $(rm-files)),RM     $(wildcard $(rm-files)))
       cmd_rmfiles = rm -f $(rm-files)
 clean:
