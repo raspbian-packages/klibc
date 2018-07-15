@@ -30,10 +30,12 @@ KLIBCLDFLAGS      = -m elf_x86_64
 # calls, and work on the memory models for this architecture
 # 2 MB - normal binaries start at 4 MB
 #
-# Recent binutils use max-page-size=0x200000 by default, which pushes
+# binutils now uses max-page-size=0x200000 by default, which pushes
 # klibc.so data over the 4 MB mark, overlapping the executable.
-# Revert to the old max-page-size=0x100000 value.
-KLIBCSHAREDFLAGS     = -Ttext 0x00200200 -z max-page-size=0x100000
+# The old default was max-page-size=0x100000, but that also results
+# in a broken layout with binutils 2.30.  Since there's no
+# architectural page size betwen 4 KB and 2MB, set it to 4 KB.
+KLIBCSHAREDFLAGS     = -Ttext 0x00200200 -z max-page-size=0x1000
 
 # Asm includes for x86_64 are in the merged x86 tree
 KLIBCARCHINCFLAGS = -I$(KLIBCKERNELOBJ)/arch/x86/include
