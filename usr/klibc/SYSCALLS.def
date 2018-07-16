@@ -116,6 +116,7 @@ int chdir(const char *);
 int fchdir(int);
 <?> int rename(const char *, const char *);
 <?> int renameat(int, const char *, int, const char *);
+<?> int renameat2(int, const char *, int, const char *, unsigned int);
 <?> int mknod(const char *, mode_t, dev_t);
 <?> int mknodat(int, const char *, mode_t, dev_t);
 <?> int chmod(const char *, mode_t);
