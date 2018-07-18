@@ -61,7 +61,7 @@
 #endif
 #define	_ASM_LABEL(name)	name
 
-#ifdef PIC
+#ifdef __PIC__
 /*
  * PIC_PROLOGUE() is akin to the compiler generated function prologue for
  * PIC code. It leaves the address of the Global Offset Table in DEST,
@@ -83,12 +83,20 @@
 0: \
 	add dest,%o7,dest; \
 	mov tmp, %o7
+#define SET(var,base,dest) \
+	sethi %gdop_hix22(var), dest; \
+	xor dest, %gdop_lox10(var), dest; \
+	ldx [base + dest], dest, %gdop(var)
 #else
 #define PIC_PROLOGUE(dest,tmp) \
 	mov %o7,tmp; 3: call 4f; nop; 4: \
 	sethi %hi(_C_LABEL(_GLOBAL_OFFSET_TABLE_)-(3b-.)),dest; \
 	or dest,%lo(_C_LABEL(_GLOBAL_OFFSET_TABLE_)-(3b-.)),dest; \
 	add dest,%o7,dest; mov tmp,%o7
+#define SET(var,base,dest) \
+	sethi %gdop_hix22(var), dest; \
+	xor dest, %gdop_lox10(var), dest; \
+	ld [base + dest], dest, %gdop(var)
 #endif
 
 /*
@@ -106,7 +114,10 @@
 #endif
 #else
 #define PIC_PROLOGUE(dest,tmp)
-#define PICCY_OFFSET(var,dest,tmp)
+#define SET(var,base,dest) \
+	sethi %hi(var), dest; \
+	or dest, %lo(var), dest
+#define PICCY_SET(var,dest,tmp) SET(var,tmp,dest)
 #endif
 
 #define FTYPE(x)		.type x,@function

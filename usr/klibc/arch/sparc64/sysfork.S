@@ -8,6 +8,8 @@
  * Common system-call stub; %g1 already set to syscall number
  */
 
+#include <machine/asm.h>
+
 	.globl	__syscall_forkish
 	.type	__syscall_forkish,#function
        	.align	4
@@ -16,8 +18,8 @@ __syscall_forkish:
 	sub	%o1, 1, %o1
 	bcc,a	%xcc, 1f
 	  and	%o0, %o1, %o0
-	sethi	%hi(errno), %g4
-	or	%g4, %lo(errno), %g4
+	PIC_PROLOGUE(%g1,%g4)
+	SET(errno,%g1,%g4)
 	st	%o0, [%g4]
 	retl
 	  mov	-1, %o0
