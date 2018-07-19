@@ -1,0 +1,29 @@
+From: Ben Hutchings <ben@decadent.org.uk>
+Date: Sat, 4 Oct 2014 16:32:39 +0100
+Subject: mount: Implement -o defaults
+Bug-Debian: https://bugs.debian.org/763049
+Forwarded: http://www.zytor.com/pipermail/klibc/2016-January/003887.html
+
+This is needed to support mounting non-root filesystems in
+initramfs-tools.
+
+Signed-off-by: Ben Hutchings <ben@decadent.org.uk>
+---
+--- a/usr/utils/mount_opts.c
++++ b/usr/utils/mount_opts.c
+@@ -89,8 +89,13 @@ parse_mount_options(char *arg, unsigned
+ 				break;
+ 		}
+ 
+-		if (res != 0 && s[0])
+-			add_extra_option(extra, opt);
++		if (res != 0 && s[0]) {
++			if (!strcmp(opt, "defaults"))
++				rwflag &= ~(MS_RDONLY|MS_NOSUID|MS_NODEV|
++					    MS_NOEXEC|MS_SYNCHRONOUS);
++			else
++				add_extra_option(extra, opt);
++		}
+ 	}
+ 
+ 	return rwflag;

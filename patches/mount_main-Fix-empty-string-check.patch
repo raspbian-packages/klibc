@@ -1,0 +1,49 @@
+From b36ed959bf051b23785cc988d2f4f73c55a793ff Mon Sep 17 00:00:00 2001
+From: Benjamin Drung <benjamin.drung@profitbricks.com>
+Date: Wed, 13 Jun 2018 11:48:39 +0200
+Subject: [PATCH] mount_main: Fix empty string check
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+Forwarded: https://www.zytor.com/pipermail/klibc/2018-June/003993.html
+
+gcc 7.3.0 complains:
+
+```
+usr/utils/mount_main.c: In function ‘print_mount’:
+usr/utils/mount_main.c:46:46: warning: comparison between pointer and zero character constant [-Wpointer-compare]
+   if (mnt->mnt_type != NULL && mnt->mnt_type != '\0')
+                                              ^~
+usr/utils/mount_main.c:46:32: note: did you mean to dereference the pointer?
+   if (mnt->mnt_type != NULL && mnt->mnt_type != '\0')
+                                ^
+usr/utils/mount_main.c:48:46: warning: comparison between pointer and zero character constant [-Wpointer-compare]
+   if (mnt->mnt_opts != NULL && mnt->mnt_opts != '\0')
+                                              ^~
+usr/utils/mount_main.c:48:32: note: did you mean to dereference the pointer?
+   if (mnt->mnt_opts != NULL && mnt->mnt_opts != '\0')
+                                ^
+```
+---
+ usr/utils/mount_main.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/usr/utils/mount_main.c b/usr/utils/mount_main.c
+index ab3cb718..0d299c43 100644
+--- a/usr/utils/mount_main.c
++++ b/usr/utils/mount_main.c
+@@ -43,9 +43,9 @@ static __noreturn print_mount(char *type)
+ 		if (type && mnt->mnt_type && strcmp(type, mnt->mnt_type))
+ 			continue;
+ 		printf("%s on %s", mnt->mnt_fsname, mnt->mnt_dir);
+-		if (mnt->mnt_type != NULL && mnt->mnt_type != '\0')
++		if (mnt->mnt_type != NULL && *mnt->mnt_type != '\0')
+ 			printf(" type %s", mnt->mnt_type);
+-		if (mnt->mnt_opts != NULL && mnt->mnt_opts != '\0')
++		if (mnt->mnt_opts != NULL && *mnt->mnt_opts != '\0')
+ 			printf(" (%s)", mnt->mnt_opts);
+ 		printf("\n");
+ 	}
+-- 
+2.17.1
+
