@@ -16,8 +16,8 @@
 #define RB_DISABLE_CAD	LINUX_REBOOT_CMD_CAD_OFF
 #define RB_POWER_OFF	LINUX_REBOOT_CMD_POWER_OFF
 
-/* glibc-ish one-argument version */
-__extern int reboot(int);
+/* two-arguments version of reboot */
+__extern int reboot(int, void *);
 
 /* Native four-argument system call */
 __extern int __reboot(int, int, int, void *);
