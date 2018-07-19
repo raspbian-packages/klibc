@@ -44,8 +44,8 @@ int do_resume(int argc, char *argv[])
 int resume(const char *resume_file, unsigned long long resume_offset)
 {
 	dev_t resume_device;
-	int powerfd = -1;
-	char device_string[64];
+	int attr_fd = -1;
+	char attr_value[64];
 	int len;
 
 	resume_device = name_to_dev_t(resume_file);
@@ -55,29 +55,49 @@ int resume(const char *resume_file, unsigned long long resume_offset)
 		goto failure;
 	}
 
-	if ((powerfd = open("/sys/power/resume", O_WRONLY)) < 0)
-		goto fail_r;
+	if ((attr_fd = open("/sys/power/resume_offset", O_WRONLY)) < 0)
+		goto fail_offset;
 
-	len = snprintf(device_string, sizeof device_string,
-		       "%u:%u:%llu",
-		       major(resume_device), minor(resume_device),
+	len = snprintf(attr_value, sizeof attr_value,
+		       "%llu",
 		       resume_offset);
 
 	/* This should never happen */
-	if (len >= sizeof device_string)
+	if (len >= sizeof attr_value)
+		goto fail_offset;
+
+	if (write(attr_fd, attr_value, len) != len)
+		goto fail_offset;
+
+	close(attr_fd);
+
+	if ((attr_fd = open("/sys/power/resume", O_WRONLY)) < 0)
+		goto fail_r;
+
+	len = snprintf(attr_value, sizeof attr_value,
+		       "%u:%u",
+		       major(resume_device), minor(resume_device));
+
+	/* This should never happen */
+	if (len >= sizeof attr_value)
 		goto fail_r;
 
 	dprintf("kinit: trying to resume from %s\n", resume_file);
 
-	if (write(powerfd, device_string, len) != len)
+	if (write(attr_fd, attr_value, len) != len)
 		goto fail_r;
 
 	/* Okay, what are we still doing alive... */
 failure:
-	if (powerfd >= 0)
-		close(powerfd);
+	if (attr_fd >= 0)
+		close(attr_fd);
 	dprintf("kinit: No resume image, doing normal boot...\n");
 	return -1;
+
+fail_offset:
+	fprintf(stderr, "Cannot write /sys/power/resume_offset "
+			"(no software suspend kernel support, or old kernel version?)\n");
+	goto failure;
 
 fail_r:
 	fprintf(stderr, "Cannot write /sys/power/resume "
