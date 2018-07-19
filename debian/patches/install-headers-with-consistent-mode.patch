@@ -1,0 +1,22 @@
+From: Ben Hutchings <ben@decadent.org.uk>
+Date: Wed, 09 Sep 2015 01:24:56 +0100
+Subject: Install headers with consistent mode
+Forwarded: http://www.zytor.com/pipermail/klibc/2016-January/003891.html
+
+Currently we ensure the installed headers are readable by everyone,
+but write permissions will depend on the current umask.  Turn off the
+group and other writable bits to ensure consistent results.
+
+Signed-off-by: Ben Hutchings <ben@decadent.org.uk>
+---
+--- a/scripts/Kbuild.install
++++ b/scripts/Kbuild.install
+@@ -102,7 +102,7 @@ header:
+ 		ln -sf /usr/include/$(DEB_HOST_MULTIARCH)/asm $(INSTALLROOT)$(INSTALLDIR)/$(KCROSS)include/ || exit; \
+ 	fi
+ 	$(Q)cp -rf usr/include/. $(INSTALLROOT)$(INSTALLDIR)/$(KCROSS)include/.
+-	$(Q)chmod -R a+rX $(INSTALLROOT)$(INSTALLDIR)/$(KCROSS)include
++	$(Q)chmod -R a+rX,go-w $(INSTALLROOT)$(INSTALLDIR)/$(KCROSS)include
+ 	$(Q)$(install-data) $(srctree)/klcc/klcc.1 $(INSTALLROOT)$(mandir)/man1/$(KCROSS)klcc.1
+ 	$(Q)$(install-bin) $(objtree)/klcc/$(KCROSS)klcc $(INSTALLROOT)$(bindir)
+ 

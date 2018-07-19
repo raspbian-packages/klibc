@@ -1,0 +1,101 @@
+From: "H. Peter Anvin" <hpa@linux.intel.com>
+Date: Tue, 5 Jan 2016 18:31:40 -0800
+Subject: [klibc] Add accept4(), handle fallback from accept() to accept4()
+Origin: https://git.kernel.org/pub/scm/libs/klibc/klibc.git/commit?id=cf8147c43a60d9eb6a6713d16f30364a698a6936
+
+Add support for the accept4() system call.
+
+Some architectures now have accept4() but not accept(), so introduce a
+standard fallback.  However, since accept() is a socketcall, we have
+to do some special hacks.
+
+While we are at it, handle conditional socketcall stubs based on
+their existence <linux/net.h>, analogous to <asm/unistd.h>.
+
+Signed-off-by: H. Peter Anvin <hpa@linux.intel.com>
+---
+ usr/include/sys/socket.h  |  1 +
+ usr/klibc/Kbuild          |  2 +-
+ usr/klibc/SOCKETCALLS.def |  1 +
+ usr/klibc/accept.c        | 16 ++++++++++++++++
+ usr/klibc/socketcalls.pl  | 15 +++++++++++++--
+ 5 files changed, 32 insertions(+), 3 deletions(-)
+ create mode 100644 usr/klibc/accept.c
+
+--- a/usr/include/sys/socket.h
++++ b/usr/include/sys/socket.h
+@@ -251,6 +251,7 @@ __extern int bind(int, const struct sock
+ __extern int connect(int, const struct sockaddr *, socklen_t);
+ __extern int listen(int, int);
+ __extern int accept(int, struct sockaddr *, socklen_t *);
++__extern int accept4(int, struct sockaddr *, socklen_t *, int);
+ __extern int getsockname(int, struct sockaddr *, socklen_t *);
+ __extern int getpeername(int, struct sockaddr *, socklen_t *);
+ __extern int socketpair(int, int, int, int *);
+--- a/usr/klibc/Kbuild
++++ b/usr/klibc/Kbuild
+@@ -58,7 +58,7 @@ klib-y += vsnprintf.o snprintf.o vsprint
+ 	  lrand48.o jrand48.o mrand48.o nrand48.o srand48.o seed48.o \
+ 	  inet/inet_ntoa.o inet/inet_aton.o inet/inet_addr.o \
+ 	  inet/inet_ntop.o inet/inet_pton.o inet/bindresvport.o \
+-	  send.o recv.o \
++	  accept.o send.o recv.o \
+ 	  access.o chmod.o chown.o dup2.o mknod.o poll.o rename.o stat.o \
+ 	  lchown.o link.o rmdir.o unlink.o utimes.o lstat.o mkdir.o \
+ 	  readlink.o select.o symlink.o pipe.o \
+--- a/usr/klibc/SOCKETCALLS.def
++++ b/usr/klibc/SOCKETCALLS.def
+@@ -9,6 +9,7 @@
+ <?> int connect(int, const struct sockaddr *, socklen_t);
+ <?> int listen(int, int);
+ <?> int accept(int, struct sockaddr *, socklen_t *);
++<?> int accept4(int, struct sockaddr *, socklen_t *, int);
+ <?> int getsockname(int, struct sockaddr *, socklen_t *);
+ <?> int getpeername(int, struct sockaddr *, socklen_t *);
+ <?> int socketpair(int, int, int, int *);
+--- /dev/null
++++ b/usr/klibc/accept.c
+@@ -0,0 +1,16 @@
++/*
++ * pread.c
++ *
++ * Some architectures need to wrap the system call
++ */
++
++#include <sys/socket.h>
++
++#if !_KLIBC_SYS_SOCKETCALL && defined(__NR_accept4) && !defined(__NR_accept)
++
++int accept(int socket, struct sockaddr *address, socklen_t *addr_len)
++{
++	return accept4(socket, address, addr_len, 0);
++}
++
++#endif
+--- a/usr/klibc/socketcalls.pl
++++ b/usr/klibc/socketcalls.pl
+@@ -47,11 +47,22 @@ while ( defined($line = <FILE>) ) {
+ 
+ 	print OUT "#include \"socketcommon.h\"\n";
+ 	print OUT "\n";
+-	print OUT "#if _KLIBC_SYS_SOCKETCALL || !defined(__NR_${name})\n\n";
++	print OUT "#if _KLIBC_SYS_SOCKETCALL\n";
++	print OUT "# define DO_THIS_SOCKETCALL\n";
++	print OUT "#else\n";
++	print OUT "# if !defined(__NR_${name})";
++	if ($name eq 'accept') {
++	    print OUT " && !defined(__NR_accept4)";
++	}
++	print OUT "\n#  define DO_THIS_SOCKETCALL\n";
++	print OUT "# endif\n";
++	print OUT "#endif\n\n";
++
++	print OUT "#if defined(DO_THIS_SOCKETCALL) && defined(SYS_\U${name}\E)\n\n";
+ 
+ 	print OUT "extern long __socketcall(int, const unsigned long *);\n\n";
+ 
+-	print OUT "$type $name (", join(', ', @cargs), ")\n";
++	print OUT "$type ${name}(", join(', ', @cargs), ")\n";
+ 	print OUT "{\n";
+ 	print OUT "    unsigned long args[$nargs];\n";
+ 	for ( $i = 0 ; $i < $nargs ; $i++ ) {
