@@ -27,4 +27,8 @@ shared/resume-lib := ../lib.a
 clean-dirs := static shared
 
 # install binary
-install-y := $(shared-y)
+ifeq ($(ARCH),ia64)
+      install-y := $(static-y)
+else
+      install-y := $(shared-y)
+endif
