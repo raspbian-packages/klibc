@@ -1,6 +1,7 @@
 From: Ben Hutchings <ben@decadent.org.uk>
 Date: Sun, 14 Mar 2010 18:41:56 +0000
 Subject: Fix klibc Debian specific build trouble
+Forwarded: https://www.zytor.com/pipermail/klibc/2010-March/002524.html
 
 Simply remove the headers_install invocation and rely on linux-libc-dev.
 

@@ -9,6 +9,7 @@ Description: Include the multiarch include directory in klcc's path
  probably wait until we have a way to get this path information in a
  vendor-neutral manner.
 Author: Steve Langasek <steve.langasek@linaro.org>
+Forwarded: https://www.zytor.com/pipermail/klibc/2011-April/002893.html
 
 Index: klibc-2.0~rc2/klcc/Kbuild
 ===================================================================

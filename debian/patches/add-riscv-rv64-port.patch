@@ -1,0 +1,315 @@
+From: Ben Hutchings <ben@decadent.org.uk>
+Date: Tue, 17 Jul 2018 02:55:19 +0100
+Subject: Add RISC-V (RV64) port
+Forwarded: https://www.zytor.com/pipermail/klibc/2018-July/003997.html
+
+RISC-V is pretty boring.  I've cribbed most of this from the MIPS and
+AArch64 ports.
+
+I ran into difficulty with initialisation of the gp,register, which I
+think has to be process-global - the psABI says that signal handlers
+can rely on it, and they could come from any module.  This means that
+klibc.so and the executable using it need to agree on a single value.
+Currently they don't, and this causes gp-relative addressing to go
+wrong.
+
+gp-relative addressing is introduced by "relaxation" in the linker,
+so I've disabled that for now.
+
+Signed-off-by: Ben Hutchings <ben@decadent.org.uk>
+---
+--- /dev/null
++++ b/usr/include/arch/riscv64/klibc/archconfig.h
+@@ -0,0 +1,15 @@
++/*
++ * include/arch/riscv64/klibc/archconfig.h
++ *
++ * See include/klibc/sysconfig.h for the options that can be set in
++ * this file.
++ *
++ */
++
++#ifndef _KLIBC_ARCHCONFIG_H
++#define _KLIBC_ARCHCONFIG_H
++
++/* We have an MMU but no fork() syscall */
++#define _KLIBC_NO_MMU 0
++
++#endif				/* _KLIBC_ARCHCONFIG_H */
+--- /dev/null
++++ b/usr/include/arch/riscv64/klibc/archsetjmp.h
+@@ -0,0 +1,27 @@
++/*
++ * arch/riscv64/include/klibc/archsetjmp.h
++ */
++
++#ifndef _KLIBC_ARCHSETJMP_H
++#define _KLIBC_ARCHSETJMP_H
++
++struct __jmp_buf {
++	unsigned long __pc;
++	unsigned long __s0;
++	unsigned long __s1;
++	unsigned long __s2;
++	unsigned long __s3;
++	unsigned long __s4;
++	unsigned long __s5;
++	unsigned long __s6;
++	unsigned long __s7;
++	unsigned long __s8;
++	unsigned long __s9;
++	unsigned long __s10;
++	unsigned long __s11;
++	unsigned long __sp;
++};
++
++typedef struct __jmp_buf jmp_buf[1];
++
++#endif				/* _SETJMP_H */
+--- /dev/null
++++ b/usr/include/arch/riscv64/klibc/archsignal.h
+@@ -0,0 +1,14 @@
++/*
++ * arch/riscv/include/klibc/archsignal.h
++ *
++ * Architecture-specific signal definitions
++ *
++ */
++
++#ifndef _KLIBC_ARCHSIGNAL_H
++#define _KLIBC_ARCHSIGNAL_H
++
++#include <asm/signal.h>
++/* No special stuff for this architecture */
++
++#endif
+--- /dev/null
++++ b/usr/include/arch/riscv64/klibc/archstat.h
+@@ -0,0 +1,28 @@
++#ifndef _KLIBC_ARCHSTAT_H
++#define _KLIBC_ARCHSTAT_H
++
++#include <klibc/stathelp.h>
++
++#define _STATBUF_ST_NSEC
++
++struct stat {
++	__stdev64	(st_dev);	/* Device */
++	unsigned long	st_ino;		/* File serial number */
++	unsigned int	st_mode;	/* File mode */
++	unsigned int	st_nlink;	/* Link count */
++	unsigned int	st_uid;		/* User ID of the file's owner */
++	unsigned int	st_gid;		/* Group ID of the file's group */
++	__stdev64	(st_rdev);	/* Device number, if device */
++	unsigned long	__pad1;
++	long		st_size;	/* Size of file, in bytes */
++	int		st_blksize;	/* Optimal block size for I/O */
++	int		__pad2;
++	long		st_blocks;	/* Number 512-byte blocks allocated */
++	struct timespec st_atim;	/* Time of last access */
++	struct timespec st_mtim;	/* Time of last modification */
++	struct timespec st_ctim;	/* Time of last status change */
++	unsigned int	__unused4;
++	unsigned int	__unused5;
++};
++
++#endif
+--- /dev/null
++++ b/usr/include/arch/riscv64/machine/asm.h
+@@ -0,0 +1,26 @@
++/*
++ * arch/riscv64/include/machine/asm.h
++ *
++ * Mostly cribbed from mips.
++ */
++
++#ifndef _MACHINE_ASM_H
++#define _MACHINE_ASM_H
++
++/*
++ * ENTRY - declare entry point
++ */
++#define ENTRY(symbol)                           \
++	.globl  symbol;                         \
++	.align  2;                              \
++	.type   symbol, @function;              \
++symbol:
++
++/*
++ * END - mark end of function
++ */
++#define END(function)                           \
++	.size   function, . - function
++
++
++#endif				/* _MACHINE_ASM_H */
+--- /dev/null
++++ b/usr/klibc/arch/riscv64/Kbuild
+@@ -0,0 +1,8 @@
++# -*- makefile -*-
++#
++# klibc files for riscv64
++
++always  := crt0.o
++targets := crt0.o
++
++klib-y := setjmp.o syscall.o
+--- /dev/null
++++ b/usr/klibc/arch/riscv64/MCONFIG
+@@ -0,0 +1,22 @@
++# -*- makefile -*-
++#
++# arch/riscv64/MCONFIG
++#
++# Special rules for this architecture.  Note that this is actually
++# included from the main Makefile, and that pathnames should be
++# accordingly.
++#
++
++# We should get klibc.so and the executables to agree on what gp
++# should be.  For now, disable gp-relative addressing.
++KLIBCLDFLAGS      = --no-relax
++KLIBCOPTFLAGS	  += -Os -fomit-frame-pointer
++ifeq ($(DEBUG),y)
++KLIBCOPTFLAGS     += -g
++endif
++KLIBCBITSIZE      = 64
++
++# Normal binaries start at 64 KB, so start the libary at 2 MB.
++KLIBCSHAREDFLAGS  =-Ttext 0x00200200
++
++KLIBCARCHINCFLAGS = -I$(KLIBCKERNELOBJ)/arch/riscv/include
+--- /dev/null
++++ b/usr/klibc/arch/riscv64/crt0.S
+@@ -0,0 +1,22 @@
++#
++# arch/riscv64/crt0.S
++#
++# Does arch-specific initialization and invokes __libc_init
++# with the appropriate arguments.
++#
++# See __static_init.c or __shared_init.c for the expected
++# arguments.
++#
++
++#include <machine/asm.h>
++
++ENTRY(_start)
++	.option push
++	.option norelax
++	lla	gp, __global_pointer$
++	.option pop
++
++	mv	a0, sp			# Pointer to ELF entry structure
++	mv	a1, zero		# No onexit pointer
++	jal	__libc_init
++END(_start)
+--- /dev/null
++++ b/usr/klibc/arch/riscv64/setjmp.S
+@@ -0,0 +1,50 @@
++/*
++ * arch/riscv64/setjmp.S
++ *
++ * setjmp/longjmp for the RISC-V (RV64) architecture
++ *
++ * The jmp_buf is assumed to contain the following, in order:
++ *	pc (ra)
++ *	s0..s11
++ *	sp
++ */
++
++#include <machine/asm.h>
++
++ENTRY(setjmp)
++	sd	ra, 0(a0)
++	sd	s0, 8(a0)
++	sd	s1, 16(a0)
++	sd	s2, 24(a0)
++	sd	s3, 32(a0)
++	sd	s4, 40(a0)
++	sd	s5, 48(a0)
++	sd	s6, 56(a0)
++	sd	s7, 64(a0)
++	sd	s8, 72(a0)
++	sd	s9, 80(a0)
++	sd	s10, 88(a0)
++	sd	s11, 96(a0)
++	sd	sp, 104(a0)
++	mv	a0, zero
++	jr	ra
++END(setjmp)
++
++ENTRY(longjmp)
++	ld	ra, 0(a0)
++	ld	s0, 8(a0)
++	ld	s1, 16(a0)
++	ld	s2, 24(a0)
++	ld	s3, 32(a0)
++	ld	s4, 40(a0)
++	ld	s5, 48(a0)
++	ld	s6, 56(a0)
++	ld	s7, 64(a0)
++	ld	s8, 72(a0)
++	ld	s9, 80(a0)
++	ld	s10, 88(a0)
++	ld	s11, 96(a0)
++	ld	sp, 104(a0)
++	mv	a0, a1
++	jr	ra
++END(longjmp)
+--- /dev/null
++++ b/usr/klibc/arch/riscv64/syscall.S
+@@ -0,0 +1,13 @@
++#include <machine/asm.h>
++#include <asm/unistd.h>
++
++ENTRY(__syscall_common)
++	scall
++	li	t0, -4096
++	bleu	a0, t0, 1f
++	neg	a0, a0
++	lui	t0, %hi(errno)
++	sw	a0, %lo(errno)(t0)
++	li	a0, -1
++1:	jr	ra
++END(__syscall_common)
+--- /dev/null
++++ b/usr/klibc/arch/riscv64/sysstub.ph
+@@ -0,0 +1,26 @@
++# -*- perl -*-
++#
++# arch/riscv/sysstub.ph
++#
++# Script to generate system call stubs
++#
++
++# On RISC-V, most system calls follow the standard convention, with the
++# system call number in x17 (a7) and the return value in x10 (a0).
++
++sub make_sysstub($$$$$@) {
++    my($outputdir, $fname, $type, $sname, $stype, @args) = @_;
++
++    $stype = $stype || 'common';
++    open(OUT, '>', "${outputdir}/${fname}.S");
++    print OUT "#include <machine/asm.h>\n";
++    print OUT "#include <asm/unistd.h>\n";
++    print OUT "\n";
++    print OUT "ENTRY(${fname})\n";
++    print OUT "\tli\ta7, __NR_${sname}\n";
++    print OUT "\tj\t__syscall_${stype}\n";
++    print OUT "END(${fname})\n";
++    close(OUT);
++}
++
++1;
+--- a/usr/klibc/SYSCALLS.def
++++ b/usr/klibc/SYSCALLS.def
+@@ -21,7 +21,7 @@ void _exit,exit::_exit(int);
+ <?!ia64> pid_t clone::__clone(unsigned long, void *);
+ <?ia64> pid_t clone::__clone2(unsigned long, void *, void *);
+ # if ! _KLIBC_NO_MMU
+-<!sparc,sparc64,ia64,arm64> pid_t fork();
++<!sparc,sparc64,ia64,arm64,riscv64> pid_t fork();
+ <sparc,sparc64> pid_t fork@forkish();
+ #endif
+ #if _KLIBC_REAL_VFORK

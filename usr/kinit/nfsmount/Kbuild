@@ -24,4 +24,8 @@ dummypmap-y := dummypmap_test.o
 clean-dirs := static shared
 
 # Install binary
-install-y := $(shared-y)
+ifeq ($(ARCH),ia64)
+      install-y := $(static-y)
+else
+      install-y := $(shared-y)
+endif

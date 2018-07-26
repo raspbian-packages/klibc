@@ -1,9 +1,50 @@
-klibc (2.0.4-11+rpi1) buster-staging; urgency=medium
+klibc (2.0.4-14+rpi1) buster-staging; urgency=medium
 
   [changes brought forward from 2.0.4-2+rpi1 by Peter Michael Green <plugwash@p10link.net> at Wed, 26 Nov 2014 22:01:00 +0000]
   * Change compiler settings to values suitable for raspberry pi
 
- -- Raspbian forward porter <root@raspbian.org>  Fri, 05 Jan 2018 14:58:59 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Thu, 26 Jul 2018 14:48:14 +0000
+
+klibc (2.0.4-14) unstable; urgency=medium
+
+  [ James Clarke ]
+  * [klibc] Fix sparc assembly when compiled as PIC (Closes: #885852)
+
+ -- Ben Hutchings <ben@decadent.org.uk>  Thu, 19 Jul 2018 01:13:54 +0100
+
+klibc (2.0.4-13) unstable; urgency=medium
+
+  * [klibc] rename, renameat: Use renameat2() system call
+  * [klibc] Add RISC-V (RV64) port
+  * debian/rules: Add architecture mapping for riscv64
+  * debian/control: Drop obsolete build-dependency on bison
+  * debian/control: Restrict build-dependency on m4 to sparc, sparc64
+  * debian/patches: Add Forwarded fields as appropriate
+  * debian/rules: Add architecture mapping for sparc64
+
+ -- Ben Hutchings <ben@decadent.org.uk>  Wed, 18 Jul 2018 00:27:22 +0100
+
+klibc (2.0.4-12) unstable; urgency=medium
+
+  [ Ben Hutchings ]
+  * debian/control: Point Vcs URLs to Salsa
+  * debian/klibc-utils.postinst: Remove diversion of initramfs-tools hook
+    script (Closes: #886939)
+  * [klibc] mips64: compile with -mno-abicalls, thanks to James Cowgill
+    (Closes: #891924)
+  * reboot: Add support for reboot syscall argument, thanks to Alfonso
+    Sanchez-Beato (Closes: #863761, LP: #1692494)
+  * [klibc] x86_64: Reduce ld max-page-size option again (Closes: #903849)
+  * Never clean files in quilt status directory
+
+  [ Frank Scheiner ]
+  * [klibc] ia64: Build static tools (again)
+
+  [ Benjamin Drung ]
+  * ipconfig: Implement classless static routes (Closes: #884716, LP: #1526956)
+  * mount_main: Fix empty string check
+
+ -- Ben Hutchings <ben@decadent.org.uk>  Sun, 15 Jul 2018 22:22:07 +0100
 
 klibc (2.0.4-11) unstable; urgency=medium
 

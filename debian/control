@@ -2,13 +2,13 @@ Source: klibc
 Priority: optional
 Maintainer: maximilian attems <maks@debian.org>
 Uploaders: Ben Hutchings <ben@decadent.org.uk>
-Build-Depends: debhelper (>= 9~), linux-libc-dev, bison, m4
+Build-Depends: debhelper (>= 9~), linux-libc-dev, m4 [sparc sparc64]
 # klcc will depend on ccache if it was installed at build time; see #777217
 Build-Conflicts: ccache
 Section: libs
 Standards-Version: 4.1.2
-Vcs-Browser: https://anonscm.debian.org/cgit/kernel/klibc.git
-Vcs-Git: https://anonscm.debian.org/git/kernel/klibc.git
+Vcs-Browser: https://salsa.debian.org/kernel-team/klibc
+Vcs-Git: https://salsa.debian.org/kernel-team/klibc.git
 # maybe some day replace with a real one?
 Homepage: https://git.kernel.org/cgit/libs/klibc/klibc.git
 

@@ -5,6 +5,7 @@
  * they return the two file descriptors in %o0 and %o1.
  */
 
+#include <machine/asm.h>
 #include <asm/unistd.h>
 
 	.globl	pipe
@@ -16,8 +17,8 @@ pipe:
 	t	0x6d
 	bcc	%xcc, 1f
 	  nop
-	sethi	%hi(errno), %g4
-	or	%g4, %lo(errno), %g4
+	PIC_PROLOGUE(%g1,%g4)
+	SET(errno,%g1,%g4)
 	st	%o0,[%g4]
 	retl
 	  mov	-1, %o0

@@ -1,14 +1,22 @@
 #ifndef IPCONFIG_NETDEV_H
 #define IPCONFIG_NETDEV_H
 
+#include <arpa/inet.h>
 #include <sys/utsname.h>
 #include <net/if.h>
 
 #define BPLEN		256
 #define FNLEN		128			/* from DHCP  RFC 2131 */
 
+struct route {
+	uint32_t subnet;			/* subnet            */
+	uint32_t netmask_width;	/* subnet mask width */
+	uint32_t gateway;		/* gateway           */
+	struct route *next;
+};
+
 struct netdev {
-	const char *name;	/* Device name          */
+	char *name;		/* Device name          */
 	unsigned int ifindex;	/* interface index      */
 	unsigned int hwtype;	/* ARPHRD_xxx           */
 	unsigned int hwlen;	/* HW address length    */
@@ -44,6 +52,7 @@ struct netdev {
 	char bootpath[BPLEN];	/* boot path            */
 	char filename[FNLEN];   /* filename             */
 	char *domainsearch;	/* decoded, NULL or malloc-ed  */
+	struct route *routes;	/* decoded, NULL or malloc-ed list */
 	long uptime;		/* when complete configuration */
 	int pkt_fd;		/* packet socket for this interface */
 	struct netdev *next;	/* next configured i/f  */
@@ -70,7 +79,7 @@ extern struct netdev *ifaces;
 
 int netdev_getflags(struct netdev *dev, short *flags);
 int netdev_setaddress(struct netdev *dev);
-int netdev_setdefaultroute(struct netdev *dev);
+int netdev_setroutes(struct netdev *dev);
 int netdev_up(struct netdev *dev);
 int netdev_down(struct netdev *dev);
 int netdev_init_if(struct netdev *dev);
@@ -82,6 +91,17 @@ static inline int netdev_running(struct netdev *dev)
 	int ret = netdev_getflags(dev, &flags);
 
 	return ret ? 0 : !!(flags & IFF_RUNNING);
+}
+
+static inline uint32_t netdev_genmask(uint32_t netmask_width)
+{
+	/* Map netmask width to network mask in network byte order.
+	   Example: 24 -> "255.255.255.0" -> htonl(0xFFFFFF00) */
+	if (netmask_width == 0) {
+		return 0;
+	} else {
+		return htonl(~((1u << (32 - netmask_width)) - 1));
+	}
 }
 
 #endif /* IPCONFIG_NETDEV_H */

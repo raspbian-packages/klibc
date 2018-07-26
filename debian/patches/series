@@ -1,3 +1,4 @@
+never-clean-files-in-quilt-status-directory.patch
 klibc-linux-libc-dev
 multiarch-include-path
 ppc64el-load-toc-syscall-stub.patch
@@ -17,3 +18,12 @@ broadcast_dhcp_send.patch
 dhcp-one-socket-per-interface.patch
 klibc-i386-remove-special-handling-of-socketcall.patch
 klibc-add-accept4-handle-fallback-from-accept-to-acc.patch
+ia64-build-static-tools.patch
+Implement-classless-static-routes.patch
+mount_main-Fix-empty-string-check.patch
+mips64-compile-with-mno-abicalls.patch
+add-reboot-argument-support.patch
+x86_64-reduce-ld-max-page-size-option-again.patch
+rename-renameat-use-rename2-system-call.patch
+add-riscv-rv64-port.patch
+sparc-pie.patch

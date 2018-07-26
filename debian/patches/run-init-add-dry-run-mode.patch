@@ -2,6 +2,7 @@ From: Ben Hutchings <ben@decadent.org.uk>
 Date: Sun, 17 Jan 2016 19:50:28 +0000
 Subject: run-init: Add dry-run mode
 Bug-Debian: https://bugs.debian.org/810965
+Forwarded: https://www.zytor.com/pipermail/klibc/2016-January/003909.html
 
 initramfs-tools wants to validate the real init program before running
 it, as there is no way out once it has exec'd run-init.  This is

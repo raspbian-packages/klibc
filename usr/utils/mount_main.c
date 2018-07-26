@@ -43,9 +43,9 @@ static __noreturn print_mount(char *type)
 		if (type && mnt->mnt_type && strcmp(type, mnt->mnt_type))
 			continue;
 		printf("%s on %s", mnt->mnt_fsname, mnt->mnt_dir);
-		if (mnt->mnt_type != NULL && mnt->mnt_type != '\0')
+		if (mnt->mnt_type != NULL && *mnt->mnt_type != '\0')
 			printf(" type %s", mnt->mnt_type);
-		if (mnt->mnt_opts != NULL && mnt->mnt_opts != '\0')
+		if (mnt->mnt_opts != NULL && *mnt->mnt_opts != '\0')
 			printf(" (%s)", mnt->mnt_opts);
 		printf("\n");
 	}

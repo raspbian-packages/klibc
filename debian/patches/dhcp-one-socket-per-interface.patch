@@ -10,6 +10,7 @@ Description: Use separate sockets for DHCP from multiple interfaces
  is processed in a correct context.
 Bug-Debian: http://bugs.debian.org/852480
 Bug-Ubuntu: https://bugs.launchpad.net/bugs/1652348
+Forwarded: https://www.zytor.com/pipermail/klibc/2017-February/003945.html
 
 diff --git a/usr/kinit/ipconfig/main.c b/usr/kinit/ipconfig/main.c
 index 7be2a1fcb5af..e00f049173fb 100644

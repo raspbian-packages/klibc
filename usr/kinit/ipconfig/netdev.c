@@ -88,23 +88,44 @@ static void set_s_addr(struct sockaddr *saddr, uint32_t ipaddr)
 	memcpy(saddr, &sin, sizeof sin);
 }
 
-int netdev_setdefaultroute(struct netdev *dev)
+int netdev_setroutes(struct netdev *dev)
 {
 	struct rtentry r;
 
-	if (dev->ip_gateway == INADDR_ANY)
-		return 0;
+	/* RFC3442 demands:
+	   If the DHCP server returns both a Classless Static Routes option and
+	   a Router option, the DHCP client MUST ignore the Router option. */
+	if (dev->routes != NULL) {
+		struct route *cur;
+		for (cur = dev->routes; cur != NULL; cur = cur->next) {
+			memset(&r, 0, sizeof(r));
 
-	memset(&r, 0, sizeof(r));
+			r.rt_dev = dev->name;
+			set_s_addr(&r.rt_dst, cur->subnet);
+			set_s_addr(&r.rt_gateway, cur->gateway);
+			set_s_addr(&r.rt_genmask, netdev_genmask(cur->netmask_width));
+			r.rt_flags = RTF_UP;
+			if (cur->gateway != 0) {
+				r.rt_flags |= RTF_GATEWAY;
+			}
 
-	set_s_addr(&r.rt_dst, INADDR_ANY);
-	set_s_addr(&r.rt_gateway, dev->ip_gateway);
-	set_s_addr(&r.rt_genmask, INADDR_ANY);
-	r.rt_flags = RTF_UP | RTF_GATEWAY;
+			if (ioctl(cfd, SIOCADDRT, &r) == -1 && errno != EEXIST) {
+				perror("SIOCADDRT");
+				return -1;
+			}
+		}
+	} else if (dev->ip_gateway != INADDR_ANY) {
+		memset(&r, 0, sizeof(r));
 
-	if (ioctl(cfd, SIOCADDRT, &r) == -1 && errno != EEXIST) {
-		perror("SIOCADDRT");
-		return -1;
+		set_s_addr(&r.rt_dst, INADDR_ANY);
+		set_s_addr(&r.rt_gateway, dev->ip_gateway);
+		set_s_addr(&r.rt_genmask, INADDR_ANY);
+		r.rt_flags = RTF_UP | RTF_GATEWAY;
+
+		if (ioctl(cfd, SIOCADDRT, &r) == -1 && errno != EEXIST) {
+			perror("SIOCADDRT");
+			return -1;
+		}
 	}
 	return 0;
 }

@@ -93,4 +93,8 @@ $(obj)/syntax.h: $(obj)/syntax.c
 	$(Q):
 
 # Targets to install
-install-y := sh.shared
+ifeq ($(ARCH),ia64)
+      install-y := sh
+else
+      install-y := sh.shared
+endif
