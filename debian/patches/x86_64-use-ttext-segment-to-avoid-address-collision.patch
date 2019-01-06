@@ -1,0 +1,28 @@
+From: Ben Hutchings <ben@decadent.org.uk>
+Date: Sat, 05 Jan 2019 20:59:33 +0000
+Subject: [klibc] x86_64: Use -Ttext-segment to avoid address collision
+
+Building klibc for x86_64 with binutils 2.31 adds an extra
+.note.gnu.property section to klibc.so, the address of which is not
+affected by the -Ttext option.  Loading a klibc executable then
+fails with the following kernel log message:
+
+9409 (sh.shared): Uhuuh, elf segment at 0000000000200000 requested but the memory is mapped already
+
+I don't exactly see why this is happening, but it is triggered by the
+new section and the collision can be avoided by passing -Ttext-segment
+instead of -Ttext.  A similar change was applied to MIPS recently.
+
+Signed-off-by: Ben Hutchings <ben@decadent.org.uk>
+---
+--- a/usr/klibc/arch/x86_64/MCONFIG
++++ b/usr/klibc/arch/x86_64/MCONFIG
+@@ -35,7 +35,7 @@ KLIBCLDFLAGS      = -m elf_x86_64
+ # The old default was max-page-size=0x100000, but that also results
+ # in a broken layout with binutils 2.30.  Since there's no
+ # architectural page size betwen 4 KB and 2MB, set it to 4 KB.
+-KLIBCSHAREDFLAGS     = -Ttext 0x00200200 -z max-page-size=0x1000
++KLIBCSHAREDFLAGS     = -Ttext-segment 0x00200000 -z max-page-size=0x1000
+ 
+ # Asm includes for x86_64 are in the merged x86 tree
+ KLIBCARCHINCFLAGS = -I$(KLIBCKERNELOBJ)/arch/x86/include

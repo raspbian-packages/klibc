@@ -1,0 +1,21 @@
+From: Ben Hutchings <ben@decadent.org.uk>
+Date: Wed, 09 Sep 2015 02:12:40 +0100
+Subject: dash: mkbuiltins: Fix sort order harder
+Forwarded: http://www.zytor.com/pipermail/klibc/2016-January/003890.html
+
+LC_COLLATE can be overriden by LC_ALL, so set LC_ALL instead when
+running sort.
+
+Signed-off-by: Ben Hutchings <ben@decadent.org.uk>
+---
+--- a/usr/dash/mkbuiltins
++++ b/usr/dash/mkbuiltins
+@@ -78,7 +78,7 @@ awk '{	for (i = 2 ; i <= NF ; i++) {
+ 		if ($i ~ /^-/)
+ 			line = $(++i) "\t" line
+ 		print line
+-	}}' $temp | LC_COLLATE=C sort -k 1,1 | tee $temp2 | awk '{
++	}}' $temp | LC_ALL=C sort -k 1,1 | tee $temp2 | awk '{
+ 		opt = ""
+ 		if (NF > 2) {
+ 			opt = substr($2, 2)

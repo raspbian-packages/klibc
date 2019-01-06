@@ -1,0 +1,117 @@
+From: Helge Deller <deller@gmx.de>
+Subject: [klibc] Add pread and pwrite 32bit syscall wrappers for parisc
+Date: Wed, 23 Apr 2014 22:52:53 +0200
+Bug-Debian: https://bugs.debian.org/745660
+Forwarded: http://www.zytor.com/pipermail/klibc/2016-January/003880.html
+
+On the hppa arch (32bit userspace and 32 or 64bit kernel), the fstype
+program fails to detect the filesystem.  The reason for this failure
+is, that fstype calls the pread() syscall, which has on some
+architectures with 32bit userspace a different calling syntax.  I
+noticed this bug on hppa, but I assume s390 (32bit) and others might
+run into similiar issues.
+
+Signed-off-by: Helge Deller <deller@gmx.de>
+---
+--- a/usr/include/endian.h
++++ b/usr/include/endian.h
+@@ -12,4 +12,10 @@
+ #define PDP_ENDIAN	__PDP_ENDIAN
+ #define BYTE_ORDER	__BYTE_ORDER
+ 
++#if __BYTE_ORDER == __LITTLE_ENDIAN
++# define __LONG_LONG_PAIR(HI, LO) LO, HI
++#elif __BYTE_ORDER == __BIG_ENDIAN
++# define __LONG_LONG_PAIR(HI, LO) HI, LO
++#endif
++
+ #endif				/* _ENDIAN_H */
+--- a/usr/klibc/Kbuild
++++ b/usr/klibc/Kbuild
+@@ -35,6 +35,7 @@ klib-y += vsnprintf.o snprintf.o vsprint
+ 	  siglongjmp.o \
+ 	  sigaction.o sigpending.o sigprocmask.o sigsuspend.o \
+ 	  pselect.o ppoll.o \
++	  pread.o pwrite.o \
+ 	  brk.o sbrk.o malloc.o realloc.o zalloc.o calloc.o \
+ 	  mmap.o shm_open.o shm_unlink.o \
+ 	  memcpy.o memcmp.o memset.o memccpy.o memmem.o memswap.o \
+--- /dev/null
++++ b/usr/klibc/pread.c
+@@ -0,0 +1,29 @@
++/*
++ * pread.c
++ *
++ * Some architectures need to wrap the system call
++ */
++
++#include <endian.h>
++#include <sys/syscall.h>
++
++#if defined(__hppa__)
++
++#if _BITSIZE == 32
++extern size_t __pread(int, void *, size_t, unsigned int, unsigned int);
++#else
++extern size_t __pread(int, void *, size_t, off_t);
++#endif
++
++size_t pread(int fd, void *buf, size_t count, off_t offset)
++{
++#if _BITSIZE == 32
++	unsigned int hi = offset >> 32;
++	unsigned int lo = (unsigned int) offset;
++	return __pread(fd, buf, count, __LONG_LONG_PAIR(hi, lo));
++#else
++	return __pread(fd, buf, count, offset);
++#endif
++}
++
++#endif
+--- /dev/null
++++ b/usr/klibc/pwrite.c
+@@ -0,0 +1,29 @@
++/*
++ * pwrite.c
++ *
++ * Some architectures need to wrap the system call
++ */
++
++#include <endian.h>
++#include <sys/syscall.h>
++
++#if defined(__hppa__)
++
++#if _BITSIZE == 32
++extern ssize_t __pwrite(int, const void *, size_t, unsigned int, unsigned int);
++#else
++extern ssize_t __pwrite(int, const void *, size_t, off_t);
++#endif
++
++size_t pwrite(int fd, void *buf, size_t count, off_t offset)
++{
++#if _BITSIZE == 32
++	unsigned int hi = offset >> 32;
++	unsigned int lo = (unsigned int) offset;
++	return __pwrite(fd, buf, count, __LONG_LONG_PAIR(hi, lo));
++#else
++	return __pwrite(fd, buf, count, offset);
++#endif
++}
++
++#endif
+--- a/usr/klibc/SYSCALLS.def
++++ b/usr/klibc/SYSCALLS.def
+@@ -189,8 +189,10 @@ int fdatasync,fsync::fdatasync(int);
+ int readv(int, const struct iovec *, int);
+ int writev(int, const struct iovec *, int);
+ int ftruncate64,ftruncate::ftruncate(int, off_t);
+-ssize_t pread64,pread::pread(int, void *, size_t, off_t);
+-ssize_t pwrite64,pwrite::pwrite(int, void *, size_t, off_t);
++<parisc> ssize_t pread64,pread::__pread(int, void *, size_t, off_t);
++<parisc> ssize_t pwrite64,pwrite::__pwrite(int, void *, size_t, off_t);
++<!parisc> ssize_t pread64,pread::pread(int, void *, size_t, off_t);
++<!parisc> ssize_t pwrite64,pwrite::pwrite(int, void *, size_t, off_t);
+ int sync_file_range,fdatasync,fsync::sync_file_range(int, off_t, off_t, unsigned int);
+ <?> int splice(int, off_t *, int, off_t *, size_t, unsigned int);
+ <?> int tee(int, int, size_t, unsigned int);

@@ -1,0 +1,127 @@
+From: Ben Hutchings <ben@decadent.org.uk>
+Date: Thu, 19 Jul 2018 21:34:08 +0100
+Subject: resume: Backward compatibility for resume_offset
+Forwarded: not-needed
+
+In Debian we will need to maintain backward compatibility with Linux
+4.9 at least until after the "buster" release.  Therefore we need to
+accept that /sys/power/resume_offset might not exist.
+
+If we can't open that file because it doesn't exist, we should check
+whether the offset we are trying to set is the offset that the kernel
+would use anyway.  In that case, continue.
+
+---
+--- a/usr/kinit/resume/resumelib.c
++++ b/usr/kinit/resume/resumelib.c
+@@ -2,6 +2,8 @@
+  * Handle resume from suspend-to-disk
+  */
+ 
++#include <ctype.h>
++#include <errno.h>
+ #include <fcntl.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+@@ -41,6 +43,70 @@ int do_resume(int argc, char *argv[])
+ 	return resume(resume_file, resume_offset);
+ }
+ 
++/*
++ * Get the default resume_offset set on the kernel command line.
++ * Return 0 (built-in default) if it is not set, or -1 on failure.
++ */
++static unsigned long long default_resume_offset(void)
++{
++	static const char str_hibernate_noresume[] = "hibernate=noresume";
++	static const char str_resume_offset[] = "resume_offset=";
++	unsigned long long offset = -1;
++	/*
++	 * Max length of the kernel command line is arch-dependent,
++	 * but currently no more than 4K.
++	 */
++	char buf[4096], *param;
++	ssize_t len;
++	int fd;
++
++	fd = open("/proc/cmdline", O_RDONLY);
++	if (fd < 0)
++		goto out;
++
++	len = read(fd, buf, sizeof buf - 1);
++	if (len < 0)
++		goto out;
++	buf[len] = 0;
++
++	offset = 0;
++	param = buf;
++	for (;;) {
++		/* Skip white space and check for end of string */
++		param += strspn(param, " \t\r\n");
++		if (!*param)
++			break;
++
++		/* Get param length */
++		len = strcspn(param, " \t\r\n");
++
++		/*
++		 * Check for hibernate=(noresume|no) which inhibits
++		 * parsing of the resume_offset parameter
++		 */
++		if ((len == sizeof str_hibernate_noresume - 1 ||
++		     len == sizeof str_hibernate_noresume - 1 - 6) &&
++		    strncmp(param, str_hibernate_noresume, len) == 0) {
++			offset = 0;
++			break;
++		}
++
++		/* Check for resume_offset=... */
++		if (strncmp(param, str_resume_offset,
++			    sizeof str_resume_offset - 1) == 0)
++			sscanf(param + sizeof str_resume_offset - 1,
++			       "%llu", &offset);
++
++		/* Advance over param */
++		param += len;
++	}
++
++out:
++	if (fd >= 0)
++		close(fd);
++	return offset;
++}
++
+ int resume(const char *resume_file, unsigned long long resume_offset)
+ {
+ 	dev_t resume_device;
+@@ -55,8 +121,21 @@ int resume(const char *resume_file, unsi
+ 		goto failure;
+ 	}
+ 
+-	if ((attr_fd = open("/sys/power/resume_offset", O_WRONLY)) < 0)
++	if ((attr_fd = open("/sys/power/resume_offset", O_WRONLY)) < 0) {
++		if (errno == ENOENT) {
++			/*
++			 * We can't change the offset, but maybe we don't
++			 * need to.  In that case, continue.
++			 */
++			unsigned long long default_offset =
++				default_resume_offset();
++
++			if (default_offset != (unsigned long long)(-1) &&
++			    default_offset == resume_offset)
++				goto skip_offset;
++		}
+ 		goto fail_offset;
++	}
+ 
+ 	len = snprintf(attr_value, sizeof attr_value,
+ 		       "%llu",
+@@ -71,6 +150,7 @@ int resume(const char *resume_file, unsi
+ 
+ 	close(attr_fd);
+ 
++skip_offset:
+ 	if ((attr_fd = open("/sys/power/resume", O_WRONLY)) < 0)
+ 		goto fail_r;
+ 

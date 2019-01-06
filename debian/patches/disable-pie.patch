@@ -1,0 +1,22 @@
+From: Ben Hutchings <ben@decadent.org.uk>
+Date: Sun, 06 Jan 2019 03:44:40 +0000
+Subject: [klibc] Disable PIE
+
+We link all executables as non-relocatable, so it makes no sense to
+generate PIE code.  In addition, PIE code on i386 requires a working
+GOT which we don't generate.
+
+Signed-off-by: Ben Hutchings <ben@decadent.org.uk>
+---
+--- a/scripts/Kbuild.klibc
++++ b/scripts/Kbuild.klibc
+@@ -67,7 +67,8 @@ include $(srctree)/scripts/Kbuild.includ
+ # ---------------------------------------------------------------------------
+ 
+ KLIBCREQFLAGS     := $(call cc-option, -fno-stack-protector, ) \
+-                     $(call cc-option, -fwrapv, )
++                     $(call cc-option, -fwrapv, ) \
++                     $(call cc-option, -fno-PIE, )
+ KLIBCARCHREQFLAGS :=
+ KLIBCOPTFLAGS     :=
+ KLIBCWARNFLAGS    := -W -Wall -Wno-sign-compare -Wno-unused-parameter
