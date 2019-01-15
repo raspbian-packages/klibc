@@ -24,6 +24,11 @@ mount_main-Fix-empty-string-check.patch
 mips64-compile-with-mno-abicalls.patch
 add-reboot-argument-support.patch
 x86_64-reduce-ld-max-page-size-option-again.patch
+x86_64-use-ttext-segment-to-avoid-address-collision.patch
 rename-renameat-use-rename2-system-call.patch
 add-riscv-rv64-port.patch
 sparc-pie.patch
+resume-write-resume_offset-parameter.patch
+resume-backward-compatibility-for-resume_offset.patch
+i386-use-ttext-segment-to-avoid-address-collision.patch
+disable-pie.patch

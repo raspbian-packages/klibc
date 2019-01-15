@@ -1,9 +1,20 @@
-klibc (2.0.4-14+rpi1) buster-staging; urgency=medium
+klibc (2.0.4-15+rpi1) buster-staging; urgency=medium
 
   [changes brought forward from 2.0.4-2+rpi1 by Peter Michael Green <plugwash@p10link.net> at Wed, 26 Nov 2014 22:01:00 +0000]
   * Change compiler settings to values suitable for raspberry pi
 
- -- Raspbian forward porter <root@raspbian.org>  Thu, 26 Jul 2018 14:48:14 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Tue, 15 Jan 2019 11:32:43 +0000
+
+klibc (2.0.4-15) unstable; urgency=medium
+
+  * resume: Write resume_offset attribute
+  * resume: Backward compatibility for resume_offset
+  * x86_64: Use -Ttext-segment to avoid address collision
+  * i386: Use -Ttext-segment to avoid address collision
+  * Disable PIE, since we link all executables as non-relocatable
+    (Closes: #907404)
+
+ -- Ben Hutchings <ben@decadent.org.uk>  Sun, 06 Jan 2019 19:33:01 +0000
 
 klibc (2.0.4-14) unstable; urgency=medium
 
