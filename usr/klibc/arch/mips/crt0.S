@@ -10,16 +10,13 @@
 
 #include <machine/asm.h>
 
-NESTED(__start, 32, sp)
-	subu	sp, 32
-	sw	zero, 16(sp)
-
-	lui	gp, %hi(_gp)		# Initialize gp
-	addiu	gp, gp, _gp
-
-	addiu	a0, sp, 32		# Pointer to ELF entry structure
+NESTED(__start, 0, ra)
+	move	a0, sp			# Pointer to ELF entry structure
 	move	a1, v0			# Kernel-provided atexit() pointer
+	and	sp, -8			# Align stack to 8 bytes
+	subu	sp, 16			# Allocate 16 bytes for function call
 
 	jal	__libc_init
+	teq	zero, zero		# Crash if we return
 
 	END(__start)

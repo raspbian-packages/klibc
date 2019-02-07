@@ -10,8 +10,11 @@ this:
 a) Extract a recent Linux kernel into a directory and run
    "make headers_install".
    Now enter the klibc dir and point KLIBCKERNELSRC to the
-   path of the configured linux tree
+   usr subdirectory of the configured linux tree
    "make  KLIBCKERNELSRC=`pwd`/../linux/usr/".
+
+   It is also possible to install the kernel headers elsewhere and
+   point to them there.
 
 
 b) If you're cross-compiling, you need to set KLIBCARCH to the
@@ -42,10 +45,9 @@ b) If you're cross-compiling, you need to set KLIBCARCH to the
    h8300:	 Not yet ported
    i386:	 Working
    ia64:	 Working static, shared untested
-   m32r:	 Untested
    m68k:	 Working
    mips:	 Working
-   mips64:	 Not yet ported
+   mips64:	 Working
    parisc:	 Untested
    parisc64:	 Not yet ported
    ppc:		 Working
@@ -70,7 +72,7 @@ c) Try the test programs in the tests/ directory.  They should run...
 
 Contact the klibc mailing list:
 
-	http://www.zytor.com/mailman/listinfo/klibc
+	https://www.zytor.com/mailman/listinfo/klibc
 
 ... for more info.
 

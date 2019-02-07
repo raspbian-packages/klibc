@@ -7,7 +7,7 @@ always := $(KLIBCCROSS)klcc
 $(obj)/$(KLIBCCROSS)klibc.config: $(src)/Kbuild \
 				  $(srctree)/Makefile \
                                   $(srctree)/scripts/Kbuild.klibc
-	@echo "  GEN     $@"
+	@$(kecho) '  GEN     $@'
 	$(Q)rm -f $@
 	$(Q)echo 'ARCH=$(KLIBCARCH)' >> $@
 	$(Q)echo 'ARCHDIR=$(KLIBCARCHDIR)' >> $@
@@ -27,7 +27,6 @@ $(obj)/$(KLIBCCROSS)klibc.config: $(src)/Kbuild \
 	$(Q)echo 'bindir=$(INSTALLDIR)/$(KCROSS)bin' >> $@
 	$(Q)echo 'libdir=$(INSTALLDIR)/$(KCROSS)lib' >> $@
 	$(Q)echo 'includedir=$(INSTALLDIR)/$(KCROSS)include' >> $@
-	$(Q)echo 'multiarch_path=$(DEB_HOST_MULTIARCH)' >> $@
 
 
 # Generate klcc

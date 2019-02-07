@@ -437,6 +437,7 @@ static int loop(void)
 	fds = malloc(sizeof(struct pollfd) * n_devices);
 	if (!fds) {
 		fprintf(stderr, "malloc failed\n");
+		rc = -1;
 		goto bail;
 	}
 

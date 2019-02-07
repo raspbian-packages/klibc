@@ -18,7 +18,6 @@ struct __jmp_buf {
 	unsigned long __sp;
 	unsigned long __s8;
 	unsigned long __ra;
-	unsigned long __unused;
 } __attribute__ ((aligned(8)));
 
 typedef struct __jmp_buf jmp_buf[1];

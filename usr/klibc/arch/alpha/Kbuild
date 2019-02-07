@@ -35,6 +35,7 @@ $(addprefix $(obj)/,$(div-objs:.o=.S)): $(obj)/%.S: $(obj)/%.ss
 
 quiet_cmd_genss = DIV-CC  $@
       cmd_genss = $(CC) $(DIVCFLAGS) $(FILE_CFLAGS) \
+                        $(call flags,KLIBCCPPFLAGS) \
                         -DNAME=$(basename $(notdir $@)) -S -o $@ $<
 
 $(obj)/%.ss: $(obj)/divide.c

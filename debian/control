@@ -14,7 +14,7 @@ Homepage: https://git.kernel.org/cgit/libs/klibc/klibc.git
 
 Package: libklibc-dev
 Section: libdevel
-Architecture: any
+Architecture: linux-any
 Depends: libklibc (= ${binary:Version}), linux-libc-dev, ${misc:Depends}
 Description: kernel headers used during the build of klibc
  This package contains the set of kernel headers that were required to
@@ -23,7 +23,8 @@ Description: kernel headers used during the build of klibc
  klibc.  If in doubt, use real kernel headers instead.
 
 Package: libklibc
-Architecture: any
+Architecture: linux-any
+Multi-Arch: same
 Depends: ${misc:Depends}
 Description: minimal libc subset for use with initramfs
  klibc is intended to be a minimalistic libc subset for use with
@@ -32,7 +33,8 @@ Description: minimal libc subset for use with initramfs
  progress, and a lot of things are still missing.
 
 Package: klibc-utils
-Architecture: any
+Architecture: linux-any
+Multi-Arch: foreign
 Depends: libklibc (= ${binary:Version}), ${misc:Depends}
 Breaks: initramfs-tools (<< 0.123~)
 Description: small utilities built with klibc for early boot

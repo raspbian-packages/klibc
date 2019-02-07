@@ -7,5 +7,8 @@
 # accordingly.
 #
 
+KLIBCARCHREQFLAGS = -mno-pic
 KLIBCOPTFLAGS += -Os
 KLIBCBITSIZE  = 64
+
+KLIBCSHAREDFLAGS = -T $(src)/arch/$(KLIBCARCH)/klibc.ld

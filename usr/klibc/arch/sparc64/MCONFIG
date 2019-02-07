@@ -18,4 +18,4 @@ KLIBCLDFLAGS      = -m elf64_sparc
 # calls, and work on the memory models for this architecture
 # Normal binaries start at 1 MB; the linker wants 1 MB alignment,
 # and call instructions have a 30-bit signed offset, << 2.
-KLIBCSHAREDFLAGS	= -Ttext 0x80000200
+KLIBCSHAREDFLAGS	= -Ttext-segment 0x80000000

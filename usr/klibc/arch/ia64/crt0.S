@@ -14,10 +14,6 @@ _start:
 	movl r3 = FPSR_DEFAULT
 	;;
 	adds out0= 16,sp    /* argc pointer */
-	movl gp = @gprel(0f)
-0:	mov r9 = ip
-	;;
-	sub gp = r9, gp     /* back-compute gp value */
 
 	.body
 	br.call.sptk.few rp = __libc_init

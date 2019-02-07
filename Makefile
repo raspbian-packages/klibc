@@ -4,14 +4,13 @@ SRCROOT = .
 # To see a list of typical targets execute "make help"
 
 # kbuild compatibility
-export srctree  := $(shell pwd)
+export srctree  := $(or $(KBUILD_SRC),$(shell pwd))
 export objtree  := $(shell pwd)
 export KLIBCSRC := usr/klibc
 export VERSION := $(shell cat $(srctree)/$(KLIBCSRC)/version)
 export KLIBCINC := usr/include
 export KLIBCOBJ := usr/klibc
 export KLIBCKERNELSRC ?= linux
-export KLIBCKERNELOBJ ?= $(KLIBCKERNELSRC)
 
 export VPATH := $(srctree)
 
@@ -100,10 +99,10 @@ $(objtree)/.config: $(srctree)/defconfig
 	@false
 
 $(KLIBCKERNELSRC):
-	@echo "Cannot find kernel sources."
-	@echo "Either make a 'linux' symlink point to a kernel tree "
-	@echo "configured for the $(KLIBCARCH) architecture or specify "
-	@echo "KLIBCKERNELSRC=<path> to the build."
+	@echo "Cannot find kernel UAPI headers."
+	@echo "Either make a 'linux' symlink point to the usr subdirectory "
+	@echo "of a kernel tree with headers installed for the $(KLIBCARCH) "
+	@echo "architecture or specify KLIBCKERNELSRC=<path>."
 	@false
 
 rpmbuild = $(shell which rpmbuild 2>/dev/null || which rpm)
@@ -112,10 +111,10 @@ klibc.spec: klibc.spec.in $(KLIBCSRC)/version
 	sed -e 's/@@VERSION@@/$(VERSION)/g' < $< > $@
 
 # Build klcc - it is the first target
-klcc: $(objtree)/.config
+klcc: $(objtree)/.config $(KLIBCKERNELSRC)
 	$(Q)$(MAKE) $(klibc)=klcc
 
-klibc: $(objtree)/.config
+klibc: $(objtree)/.config $(KLIBCKERNELSRC)
 	$(Q)$(MAKE) $(klibc)=.
 
 test: klibc
@@ -134,8 +133,7 @@ help:
 	@echo	'test		- Run klibc tests'
 	@echo
 	@echo	'Build options:'
-	@echo	'KLIBCKERNELSRC - Path to a configured linux tree'
-	@echo	'KLIBCKERNELOBJ - Path to kernel output dir (defaults to KLIBCKERNELSRC)'
+	@echo	'KLIBCKERNELSRC - Path to usr directory containing UAPI headers'
 	@echo	'make V=0|1 [targets] 0 => quiet build (default), 1 => verbose build'
 	@echo	'make V=2   [targets] 2 => give reason for rebuild of target'
 	@echo
@@ -184,4 +182,4 @@ install: all
 # This does all the prep work needed to turn a freshly exported git repository
 # into a release tarball tree
 release: klibc.spec
-	rm -f maketar.sh .config
+	rm -f .config

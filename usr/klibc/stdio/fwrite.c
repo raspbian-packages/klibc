@@ -14,14 +14,15 @@ static size_t fwrite_noflush(const void *buf, size_t count,
 	ssize_t rv;
 
 	while (count) {
-		if (f->ibytes || f->obytes >= f->bufsiz)
+		if (f->ibytes || f->obytes >= f->bufsiz ||
+		    (f->obytes && count >= f->bufsiz))
 			if (__fflush(f))
 				break;
 
-		if (f->obytes == 0 && count >= f->bufsiz) {
+		if (count >= f->bufsiz) {
 			/*
-			 * The buffer is empty and the write is large,
-			 * so bypass the buffering entirely.
+			 * The write is large, so bypass
+			 * buffering entirely.
 			 */
 			rv = write(f->pub._IO_fileno, p, count);
 			if (rv == -1) {

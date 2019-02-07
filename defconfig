@@ -7,3 +7,4 @@ CONFIG_REGPARM=y
 # ARM options
 # CONFIG_KLIBC_THUMB is not set
 # CONFIG_AEABI is not set
+# CONFIG_DEBUG_INFO is not set

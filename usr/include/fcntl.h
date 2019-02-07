@@ -11,14 +11,30 @@
 #include <sys/types.h>
 #if defined(__mips__) && ! defined(__mips64)
 # include <klibc/archfcntl.h>
+#elif _BITSIZE == 32
+/* We want a struct flock with 64-bit offsets, which we define below */
+# define HAVE_ARCH_STRUCT_FLOCK
 #endif
 #include <linux/fcntl.h>
+#include <bitsize.h>
 
-/* This is ugly, but "struct flock" has actually been defined with
-   a long off_t, so it's really "struct flock64".  It just happens
-   to work.  Gag.  Barf.
+#if !defined(__mips__) && _BITSIZE == 32
 
-   This happens to work on all 32-bit architectures except MIPS. */
+/*
+ * <linux/fcntl.h> defines struct flock with offsets of type
+ * __kernel_off_t (= long) and struct flock64 with offsets of
+ * type __kernel_loff_t (= long long).  We want struct flock
+ * to have 64-bit offsets, so we define it here.
+ */
+
+struct flock {
+	short  l_type;
+	short  l_whence;
+	__kernel_loff_t l_start;
+	__kernel_loff_t l_len;
+	__kernel_pid_t  l_pid;
+        __ARCH_FLOCK64_PAD
+};
 
 #ifdef F_GETLK64
 # undef F_GETLK
@@ -34,6 +50,8 @@
 # undef F_SETLKW
 # define F_SETLKW F_SETLKW64
 #endif
+
+#endif /* _BITSIZE == 32 */
 
 /* This is defined here as well as in <unistd.h> */
 #ifndef _KLIBC_IN_OPEN_C

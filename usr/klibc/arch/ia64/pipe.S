@@ -13,17 +13,15 @@ pipe:
 	cmp.ne p6, p7 = -1, r10
 	mov r15 = r0
 	;;
-(p7)	addl r14 = @ltoffx(errno), r1
-
 (p6)	st4 [r32] = r8, 4
+
+(p7)	movl r14 = errno
 (p7)	addl r15 = -1, r0
 	;;
-
-(p7)	ld8.mov r14 = [r14], errno
 (p6)	st4 [r32] = r9
-	;;
 
 (p7)	st4 [r14] = r8
+
 	mov r8 = r15
 	br.ret.sptk.many b0
 	.endp pipe

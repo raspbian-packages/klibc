@@ -12,4 +12,9 @@ KLIBCOPTFLAGS     += -Os
 KLIBCBITSIZE      = 32
 
 # Extra linkflags when building the shared version of the library
-KLIBCSHAREDFLAGS	= -T $(src)/arch/$(KLIBCARCH)/klibc.ld
+# This address needs to be reachable using normal inter-module
+# calls, and work on the memory models for this architecture
+# 2 MB - normal binaries start at 4 MB
+#
+# Use -Ttext-segment so that the special .MIPS* sections are moved as well.
+KLIBCSHAREDFLAGS     = -Ttext-segment 0x00200000

@@ -46,6 +46,7 @@ static int change_disk(const char *devpath, int rfd, int disk)
 	return open(devpath, O_RDONLY);
 }
 
+#ifdef CONFIG_KLIBC_ZLIB
 /* Also used in initrd.c */
 int load_ramdisk_compressed(const char *devpath, FILE * wfd,
 			    off_t ramdisk_start)
@@ -133,6 +134,14 @@ err2:
 err1:
 	return -1;
 }
+#else
+int load_ramdisk_compressed(const char *devpath, FILE * wfd,
+			    off_t ramdisk_start)
+{
+	fprintf(stderr, "Compressed ramdisk not supported\n");
+	return -1;
+}
+#endif
 
 static int
 load_ramdisk_raw(const char *devpath, FILE * wfd, off_t ramdisk_start,

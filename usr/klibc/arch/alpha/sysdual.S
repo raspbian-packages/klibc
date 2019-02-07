@@ -18,15 +18,15 @@
 __syscall_dual1:
 	.frame	sp,0,ra,0
 	callsys
-	mov	v0, a4
 	beq	a3, 1f
 	br	pv, 2f			# pv <- pc
 2:
 	ldgp	gp, 0(pv)
 	lda	a1, errno
-	lda	v0, -1(zero)
-	stl	a3, 0(a1)
+	stl	v0, 0(a1)
+	lda	a4, -1(zero)
 1:
+	mov	a4, v0
 	ret	zero,(ra),1
 
 	.size	__syscall_dual1,.-__syscall_dual1

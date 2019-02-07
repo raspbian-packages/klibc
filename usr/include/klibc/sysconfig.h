@@ -219,7 +219,7 @@
 /*
  * _KLIBC_HAS_ARCHINIT
  *
- *	This architecture uses __libc_archinit()
+ *	This architecture has klibc/archinit.h and __libc_archinit()
  */
 #ifndef _KLIBC_HAS_ARCHINIT
 # define _KLIBC_HAS_ARCHINIT 0

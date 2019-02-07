@@ -27,7 +27,7 @@ klib-y += vsnprintf.o snprintf.o vsprintf.o sprintf.o \
 	  setpgrp.o getpgrp.o daemon.o \
 	  printf.o vprintf.o fprintf.o vfprintf.o perror.o \
 	  statfs.o fstatfs.o umount.o \
-	  creat.o open.o openat.o open_cloexec.o \
+	  creat.o open.o openat.o \
 	  fread2.o fwrite2.o fgets.o fputc.o fputs.o puts.o putchar.o \
 	  sleep.o usleep.o strtotimespec.o strtotimeval.o \
 	  raise.o abort.o assert.o alarm.o pause.o \
@@ -52,7 +52,7 @@ klib-y += vsnprintf.o snprintf.o vsprintf.o sprintf.o \
 	  getenv.o setenv.o putenv.o __put_env.o unsetenv.o \
 	  clearenv.o nullenv.o \
 	  getopt.o getopt_long.o readdir.o scandir.o alphasort.o remove.o \
-	  syslog.o closelog.o pty.o getpt.o posix_openpt.o isatty.o reboot.o \
+	  syslog.o closelog.o pty.o isatty.o reboot.o \
 	  time.o utime.o lseek.o nice.o getpriority.o \
 	  qsort.o bsearch.o \
 	  lrand48.o jrand48.o mrand48.o nrand48.o srand48.o seed48.o \
@@ -62,7 +62,7 @@ klib-y += vsnprintf.o snprintf.o vsprintf.o sprintf.o \
 	  access.o chmod.o chown.o dup2.o mknod.o poll.o rename.o renameat.o \
 	  stat.o \
 	  lchown.o link.o rmdir.o unlink.o utimes.o lstat.o mkdir.o \
-	  readlink.o select.o symlink.o pipe.o \
+	  readlink.o realpath.o select.o symlink.o pipe.o \
 	  ctype/isalnum.o ctype/isalpha.o ctype/isascii.o \
 	  ctype/isblank.o ctype/iscntrl.o ctype/isdigit.o \
 	  ctype/isgraph.o ctype/islower.o ctype/isprint.o \
@@ -91,7 +91,10 @@ SOHASH   := klibc.so
 CRT0     := arch/$(KLIBCARCHDIR)/crt0.o
 INTERP_O := interp.o
 
-always   := $(LIBC) $(SOLIB) $(SOHASH) $(INTERP_O)
+always   := $(LIBC)
+ifdef KLIBCSHAREDFLAGS
+always   += $(SOLIB) $(SOHASH) $(INTERP_O)
+endif
 LIBC     := $(call objectify,$(LIBC))
 SOLIB    := $(call objectify,$(SOLIB))
 SOHASH   := $(call objectify,$(SOHASH))
@@ -104,7 +107,8 @@ SOLIBHASH = $(shell cat $(SOLIB).hash)
 # Readable errormessages extracted from src..
 targets += errlist.c
 quiet_cmd_errlist = GEN     $@
-      cmd_errlist = $(PERL) $< $(KLIBCCPPFLAGS) -errlist > $@ || rm -f $@
+      cmd_errlist = $(PERL) $< $(call flags,KLIBCCPPFLAGS) -errlist > $@ \
+                    || rm -f $@
 
 $(obj)/errlist.c: $(srctree)/$(src)/makeerrlist.pl
 	$(call cmd,errlist)
@@ -181,10 +185,15 @@ $(INTERP_O): $(obj)/interp.S $(SOLIB).hash
 # Install klibc
 install-rule:
 	@echo "  INSTALL klibc to $(INSTALLROOT)$(INSTALLDIR)/$(KLIBCCROSS)lib"
-	$(Q)$(foreach f, $(LIBC) $(SOLIB) $(CRT0) $(INTERP_O), \
+	$(Q)$(foreach f, $(LIBC) $(CRT0), \
+	  $(shell $(install-data) $(f) \
+	          $(INSTALLROOT)$(INSTALLDIR)/$(KLIBCCROSS)lib))
+ifdef KLIBCSHAREDFLAGS
+	$(Q)$(foreach f, $(SOLIB) $(INTERP_O), \
 	  $(shell $(install-data) $(f) \
 	          $(INSTALLROOT)$(INSTALLDIR)/$(KLIBCCROSS)lib))
 	$(Q)$(install-lib) $(obj)/klibc-$(SOLIBHASH).so \
 	                      $(INSTALLROOT)$(INSTALLDIR)/$(KLIBCCROSS)lib
 	$(Q)$(install-lib) $(obj)/klibc-$(SOLIBHASH).so \
 	                      $(INSTALLROOT)$(SHLIBDIR)
+endif

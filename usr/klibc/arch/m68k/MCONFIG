@@ -16,4 +16,4 @@ KLIBCBITSIZE  = 32
 # 2816 MB - normal binaries start at 2048 MB if I read the link
 # script right.  Not sure if there is a fundamental reason
 # to not duck below the halfway point...
-KLIBCSHAREDFLAGS        = -Ttext 0xb0000000
+KLIBCSHAREDFLAGS        = -Ttext-segment 0xb0000000

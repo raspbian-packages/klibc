@@ -10,6 +10,7 @@
 #include <stddef.h>
 
 #include <malloc.h>
+#include <fcntl.h>
 
 #define EXIT_FAILURE 1
 #define EXIT_SUCCESS 0
@@ -83,13 +84,21 @@ static __inline__ void srandom(unsigned int __s)
 
 __extern int unlockpt(int);
 __extern char *ptsname(int);
-__extern int getpt(void);
-__extern int posix_openpt(int);
+
+static __inline__ int posix_openpt(int __mode)
+{
+	__extern int open(const char *, int, ...);
+
+	__mode &= ~(O_CREAT | O_TMPFILE);
+	return open("/dev/ptmx", __mode);
+}
 
 static __inline__ int grantpt(int __fd)
 {
 	(void)__fd;
 	return 0;		/* devpts does this all for us! */
 }
+
+__extern char *realpath(const char *, char *);
 
 #endif				/* _STDLIB_H */

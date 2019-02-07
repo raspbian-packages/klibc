@@ -79,6 +79,7 @@ __extern void perror(const char *);
 
 __extern int rename(const char *, const char *);
 __extern int renameat(int, const char *, int, const char *);
+__extern int renameat2(int, const char *, int, const char *, unsigned int);
 
 __extern int remove(const char *);
 

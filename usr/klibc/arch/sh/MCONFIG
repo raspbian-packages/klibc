@@ -14,4 +14,4 @@ KLIBCBITSIZE      = 32
 # This address needs to be reachable using normal inter-module
 # calls, and work on the memory models for this architecture
 # 2 MB -- the normal starting point for text is 4 MB.
-KLIBCSHAREDFLAGS	= -Ttext 0x00200200
+KLIBCSHAREDFLAGS	= -Ttext-segment 0x00200000

@@ -27,8 +27,8 @@ shared/resume-lib := ../lib.a
 clean-dirs := static shared
 
 # install binary
-ifeq ($(ARCH),ia64)
-      install-y := $(static-y)
+ifdef KLIBCSHAREDFLAGS
+install-y := $(shared-y)
 else
-      install-y := $(shared-y)
+install-y := $(static-y)
 endif

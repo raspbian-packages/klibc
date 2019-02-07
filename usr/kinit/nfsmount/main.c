@@ -36,12 +36,15 @@ static struct nfs_mount_data mount_data = {
 };
 
 int nfs_port;
+int nfs_version;
 
 static struct int_opts {
 	char *name;
 	int *val;
 } int_opts[] = {
 	{"port",	&nfs_port},
+	{"nfsvers",	&nfs_version},
+	{"vers",	&nfs_version},
 	{"rsize",	&mount_data.rsize},
 	{"wsize",	&mount_data.wsize},
 	{"timeo",	&mount_data.timeo},
@@ -127,6 +130,22 @@ static void parse_opts(char *opts)
 					progname, cp);
 				longjmp(abort_buf, 1);
 			}
+		}
+	}
+	/* If new-style options "nfsvers=" or "vers=" are passed, override
+	   old "v2" and "v3" options */
+	if (nfs_version != 0) {
+		switch (nfs_version) {
+		case 2:
+			mount_data.flags &= ~NFS_MOUNT_VER3;
+			break;
+		case 3:
+			mount_data.flags |= NFS_MOUNT_VER3;
+			break;
+		default:
+			fprintf(stderr, "%s: bad NFS version '%d'\n",
+				progname, nfs_version);
+			longjmp(abort_buf, 1);
 		}
 	}
 }

@@ -19,5 +19,5 @@ int shm_open(const char *path, int oflag, mode_t mode)
 	memcpy(pathbuf, "/dev/shm/", 9);
 	memcpy(pathbuf+9, path, len+1);
 
-	return open_cloexec(path, oflag, mode);
+	return open(path, oflag, mode|O_CLOEXEC);
 }

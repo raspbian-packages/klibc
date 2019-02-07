@@ -9,11 +9,9 @@
 	.proc	__syscall_error
 	.globl	__syscall_error
 __syscall_error:
-	addl	r2 = @ltoffx(errno),gp
+	movl	r2 = errno
 	;;
-	ld8.mov	r3 = [r2],errno
-	;;
-	st4	[r3] = r8
+	st4	[r2] = r8
 	mov	r8 = -1
 	br.ret.sptk.many b0
 	.size	__syscall_error, .-__syscall_error

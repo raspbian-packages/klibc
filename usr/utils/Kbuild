@@ -62,7 +62,10 @@ static/losetup-y    := losetup.o
 shared/losetup-y    := losetup.o
 
 # Additionally linked targets
-always := static/reboot static/poweroff shared/reboot shared/poweroff
+always := static/reboot static/poweroff
+ifdef KLIBCSHAREDFLAGS
+always += shared/reboot shared/poweroff
+endif
 
 $(obj)/static/reboot $(obj)/static/poweroff: $(obj)/static/halt
 	$(call cmd,ln)
@@ -72,9 +75,9 @@ $(obj)/shared/reboot $(obj)/shared/poweroff: $(obj)/shared/halt
 # Clean deletes the static and shared dir
 clean-dirs := static shared
 
-# install only install the shared binaries
-ifeq ($(ARCH),ia64)
-      install-y := $(static-y) static/reboot static/poweroff
+# install the shared binaries by preference
+ifdef KLIBCSHAREDFLAGS
+install-y := $(shared-y) shared/reboot shared/poweroff
 else
-      install-y := $(shared-y) shared/reboot shared/poweroff
+install-y := $(static-y) static/reboot static/poweroff
 endif

@@ -9,8 +9,6 @@
 #	sp
 #	s8
 #	ra
-#	f20..f31
-#	fcr31
 #
 
 #include <machine/asm.h>
@@ -28,8 +26,6 @@ LEAF(setjmp)
 	sw	sp, 36(a0)
 	sw	s8, 40(a0)
 	sw	ra, 44(a0)
-	cfc1	t0,$31
-	sw	t0,96(a0)
 	move	v0,zero
 	jr	ra
 
@@ -48,8 +44,6 @@ LEAF(longjmp)
 	lw	sp, 36(a0)
 	lw	s8, 40(a0)
 	lw	ra, 44(a0)
-	lw	t0, 96(a0)
-	ctc1	t0,$31
 	move	v0,a1
 	jr	ra
 

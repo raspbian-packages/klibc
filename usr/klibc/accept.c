@@ -1,5 +1,5 @@
 /*
- * pread.c
+ * accept.c
  *
  * Some architectures need to wrap the system call
  */

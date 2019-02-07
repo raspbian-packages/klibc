@@ -18,22 +18,22 @@ init-o-files := alias.o arith_yacc.o arith_yylex.o cd.o error.o eval.o exec.o ex
 
 gen-o-files := builtins.o init.o nodes.o syntax.o
 
-sh-y := $(init-o-files) $(gen-o-files)
+static/sh-y := $(init-o-files) $(gen-o-files)
 
 hostprogs-y := mkinit mksyntax mknodes mksignames
 gen-h-files := builtins.h nodes.h syntax.h token.h
 
-static-y := sh
+static-y := static/sh
 
 # The shared binary
-shared-y    := sh.shared
-sh.shared-y := $(sh-y)
+shared-y    := shared/sh
+shared/sh-y := $(static/sh-y)
 
 # For cleaning
-targets := sh sh.g sh.shared sh.shared.g $(gen-o-files)
+targets := static/sh static/sh.g shared/sh shared/sh.g $(gen-o-files)
 
 # explicit dependency for all generated files
-$(addprefix $(obj)/, $(sh-y)): $(addprefix $(obj)/, $(gen-h-files))
+$(addprefix $(obj)/, $(static/sh-y)): $(addprefix $(obj)/, $(gen-h-files))
 
 # Generate token.h
 targets += token.h
@@ -92,9 +92,12 @@ $(obj)/syntax.c: $(obj)/mksyntax
 $(obj)/syntax.h: $(obj)/syntax.c
 	$(Q):
 
+# Clean deletes the static and shared dir
+clean-dirs := static shared
+
 # Targets to install
-ifeq ($(ARCH),ia64)
-      install-y := sh
+ifdef KLIBCSHAREDFLAGS
+install-y := shared/sh
 else
-      install-y := sh.shared
+install-y := static/sh
 endif

@@ -36,6 +36,3 @@ KLIBCLDFLAGS      = -m elf_x86_64
 # in a broken layout with binutils 2.30.  Since there's no
 # architectural page size betwen 4 KB and 2MB, set it to 4 KB.
 KLIBCSHAREDFLAGS     = -Ttext-segment 0x00200000 -z max-page-size=0x1000
-
-# Asm includes for x86_64 are in the merged x86 tree
-KLIBCARCHINCFLAGS = -I$(KLIBCKERNELOBJ)/arch/x86/include

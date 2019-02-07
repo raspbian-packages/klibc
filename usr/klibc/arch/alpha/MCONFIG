@@ -13,4 +13,4 @@ KLIBCBITSIZE  = 64
 # calls, and work on the memory models for this architecture
 # 7 GB - normal binaries start at 4.5 GB, and the stack is below
 # the binary.
-KLIBCSHAREDFLAGS	= -Ttext 0x1c0000200
+KLIBCSHAREDFLAGS	= -Ttext-segment 0x1c0000000

@@ -1,9 +1,54 @@
-klibc (2.0.4-15+rpi1) buster-staging; urgency=medium
+klibc (2.0.6-1+rpi1) buster-staging; urgency=medium
 
   [changes brought forward from 2.0.4-2+rpi1 by Peter Michael Green <plugwash@p10link.net> at Wed, 26 Nov 2014 22:01:00 +0000]
   * Change compiler settings to values suitable for raspberry pi
 
- -- Raspbian forward porter <root@raspbian.org>  Tue, 15 Jan 2019 11:32:43 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Thu, 07 Feb 2019 14:05:02 +0000
+
+klibc (2.0.6-1) unstable; urgency=medium
+
+  * New upstream version:
+    - ia64: Fix shared build (thanks to James Clarke)
+    - Drop nearly all patches, which are either included or obsoleted
+  * debian/control: Change Architecture of all packages to linux-any
+  * debian/control: Mark libklibc as M-A: same (suggested by Matthias Klose)
+  * debian/control: Mark klibc-utils as M-A: foreign
+  * initramfs-tools: Remove checks for shell installed as "sh.shared"
+  * debian/rules: Change override_dh_auto_test rule to actually run tests
+
+ -- Ben Hutchings <ben@decadent.org.uk>  Fri, 01 Feb 2019 05:00:57 +0000
+
+klibc (2.0.5-2) unstable; urgency=medium
+
+  * Drop redundant patch "Include the multiarch include directory in klcc's
+    path"
+  * Drop "Fix klibc Debian specific build trouble" and introduce links in
+    debian/rules
+  * Fix up debug symbol support:
+    - Use -Ttext-segment to link shared library on all arches (Closes: #919855)
+    - Drop "kbuild: Enable build IDs"
+    - Kbuild: Add option to install unstripped binaries
+    - Kbuild: Enable full debug information
+    - Set CONFIG_DEBUG_INFO instead of overriding STRIP
+
+ -- Ben Hutchings <ben@decadent.org.uk>  Sun, 20 Jan 2019 22:49:25 +0000
+
+klibc (2.0.5-1) unstable; urgency=medium
+
+  * New upstream version:
+    - Drop most of our patches, which are now included upstream
+
+  [ Ben Hutchings ]
+  * Simplify commands to set up UAPI headers directory
+  * debian/rules: Use $(MAKE) for recursive make
+  * Build debug symbols packages
+  * libklibc-dev: Remove redundant copy of shared library
+  * Fix cross-building for powerpc*, ppc*, s390x
+
+  [ Benjamin Drung ]
+  * Fix shellcheck issues in initramfs-tools hook
+
+ -- Ben Hutchings <ben@decadent.org.uk>  Sat, 19 Jan 2019 02:53:52 +0000
 
 klibc (2.0.4-15) unstable; urgency=medium
 

@@ -4,6 +4,7 @@
  * Some architectures need to wrap the system call
  */
 
+#include <sys/types.h>
 #include <endian.h>
 #include <sys/syscall.h>
 

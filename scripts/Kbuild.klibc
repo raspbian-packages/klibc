@@ -54,7 +54,7 @@ src := $(obj)
 # Preset target and make sure it is a ':=' variable
 targets :=
 
-.phony: __build
+PHONY := __build
 __build:
 
 # Read .config if it exist, otherwise ignore
@@ -68,7 +68,8 @@ include $(srctree)/scripts/Kbuild.include
 
 KLIBCREQFLAGS     := $(call cc-option, -fno-stack-protector, ) \
                      $(call cc-option, -fwrapv, ) \
-                     $(call cc-option, -fno-PIE, )
+                     $(call cc-option, -fno-PIE, ) \
+                     -ggdb
 KLIBCARCHREQFLAGS :=
 KLIBCOPTFLAGS     :=
 KLIBCWARNFLAGS    := -W -Wall -Wno-sign-compare -Wno-unused-parameter
@@ -78,7 +79,7 @@ KLIBCLDFLAGS      :=
 KLIBCCFLAGS       :=
 
 # Defaults for arch to override
-KLIBCARCHINCFLAGS = -I$(KLIBCKERNELOBJ)/arch/$(KLIBCARCH)/include
+KLIBCARCHINCFLAGS =
 
 # Arch specific definitions for klibc
 include $(srctree)/$(KLIBCSRC)/arch/$(KLIBCARCHDIR)/MCONFIG
@@ -100,7 +101,7 @@ KLIBCAR          := $(AR)
 klibc-ar = $(KLIBCAR) $(if $(KBUILD_REPRODUCIBLE),$(2),$(1))
 
 KLIBCRANLIB      := $(call klibc-ar,s,Ds)
-KLIBCSTRIP       := $(STRIP)
+KLIBCSTRIP       := $(if $(CONFIG_DEBUG_INFO),true,$(STRIP))
 KLIBCNM          := $(NM)
 KLIBCOBJCOPY     := $(OBJCOPY)
 KLIBCOBJDUMP     := $(OBJDUMP)
@@ -113,10 +114,8 @@ KLIBCCPPFLAGS    := -nostdinc -iwithprefix include \
                     -I$(KLIBCINC)
 # kernel include paths
 KLIBCKERNELSRC	 ?= $(srctree)
-KLIBCKERNELOBJ	 ?= $(objtree)
-KLIBCCPPFLAGS    += -I$(KLIBCKERNELSRC)/include				    \
-                     $(if $(KBUILD_SRC),-I$(KLIBCKERNELOBJ)/include2 	    \
-		       -I$(KLIBCKERNELOBJ)/include -I$(srctree)/include)    \
+KLIBCCPPFLAGS    += -I$(KLIBCKERNELSRC)/include		\
+                     $(if $(KBUILD_SRC),-I$(srctree)/include)  \
 		     $(KLIBCARCHINCFLAGS)
 
 # klibc definitions
@@ -137,6 +136,10 @@ KLIBCCRTSHARED   := $(KLIBCOBJ)/interp.o
 KLIBCLIBCSHARED  := $(KLIBCOBJ)/libc.so
 # How to tell the linker main() is the entrypoint
 KLIBCEMAIN	 ?= -e main
+
+ifdef CONFIG_DEBUG_INFO
+KLIBCLDFLAGS     += --build-id=sha1
+endif
 
 #
 # This indicates the location of the final version of the shared library.
@@ -306,7 +309,10 @@ ifdef kprogs
 # Compile klibc-programs for the target
 # ===========================================================================
 
-__build : $(kprog-dirs) $(static-y) $(shared-y)
+__build : $(kprog-dirs) $(static-y)
+ifdef KLIBCSHAREDFLAGS
+__build : $(shared-y)
+endif
 
 # Descend if needed
 $(sort $(addsuffix /lib.a,$(kprog-dirs))): $(kprog-dirs) ;
@@ -375,7 +381,7 @@ endif
 # Descending
 # ---------------------------------------------------------------------------
 
-.PHONY: $(subdir-y) $(kprog-dirs) $(klib-dirs)
+PHONY += $(subdir-y) $(kprog-dirs) $(klib-dirs)
 $(sort $(subdir-y) $(kprog-dirs) $(klib-dirs)): $(lib-target)
 	$(Q)$(MAKE) $(klibc)=$@
 
@@ -420,3 +426,7 @@ endif
 # Usage:
 # $(Q)$(MAKE) $(klibc)=dir
 klibc := -rR -f $(srctree)/scripts/Kbuild.klibc obj
+
+# Declare the contents of the PHONY variable as phony.  We keep the variable for
+# if_changed.
+.PHONY: $(PHONY)

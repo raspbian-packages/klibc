@@ -1,7 +1,7 @@
 /*
  * arch/parisc/vfork.S, "vfork() me harder. ugh." -- kyle
  *
- * %r20 contains the system call number, %rp contains whence we came,
+ * %rp contains whence we came,
  * %rp is saved and restored across the syscall, thankfully.
  *
  */
@@ -12,6 +12,7 @@
 	.type	vfork,@function
 vfork:
 	/* pid_t vfork(void) */
+	ldi		113,%r20
 	ble		0x100(%sr2, %r0)	; jump to gateway page
 	nop
 

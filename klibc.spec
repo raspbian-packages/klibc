@@ -1,6 +1,6 @@
 Summary: A minimal libc subset for use with initramfs.
 Name: klibc
-Version: @@VERSION@@
+Version: 2.0.6
 Release: 1
 License: BSD/GPL
 Group: Development/Libraries

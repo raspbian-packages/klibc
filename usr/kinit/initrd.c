@@ -103,8 +103,8 @@ static int run_linuxrc(int argc, char *argv[], dev_t root_dev)
 	fclose(fp);
 
 	mkdir("/old", 0700);
-	root_fd = open_cloexec("/", O_RDONLY | O_DIRECTORY, 0);
-	old_fd = open_cloexec("/old", O_RDONLY | O_DIRECTORY, 0);
+	root_fd = open("/", O_RDONLY|O_DIRECTORY|O_CLOEXEC, 0);
+	old_fd = open("/old", O_RDONLY|O_DIRECTORY|O_CLOEXEC, 0);
 
 	if (root_fd < 0 || old_fd < 0)
 		return -errno;

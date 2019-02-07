@@ -28,6 +28,12 @@
 #include <klibc/sysconfig.h>
 #include "atexit.h"
 
+#if _KLIBC_HAS_ARCHINIT
+# include "klibc/archinit.h"
+#else
+# define __libc_archinit() ((void)0)
+#endif
+
 /* This file is included from __static_init.c or __shared_init.c */
 #ifndef SHARED
 # error "SHARED should be defined to 0 or 1"
@@ -42,7 +48,6 @@ struct auxentry {
 };
 
 extern void __libc_init_stdio(void);
-extern void __libc_archinit(void);
 
 unsigned long __auxval[_AUXVAL_MAX];
 
