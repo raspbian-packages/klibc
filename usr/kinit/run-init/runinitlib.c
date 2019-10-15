@@ -26,7 +26,7 @@
  * ----------------------------------------------------------------------- */
 
 /*
- * run_init(realroot, consoledev, drop_caps, init, initargs)
+ * run_init(realroot, consoledev, drop_caps, persist_initramfs, init, initargs)
  *
  * This function should be called as the last thing in kinit,
  * from initramfs, it does the following:
@@ -156,8 +156,8 @@ static int nuke(const char *what)
 }
 
 const char *run_init(const char *realroot, const char *console,
-		     const char *drop_caps, bool dry_run, const char *init,
-		     char **initargs)
+		     const char *drop_caps, bool dry_run,
+		     bool persist_initramfs, const char *init, char **initargs)
 {
 	struct stat rst, cst, ist;
 	struct statfs sfs;
@@ -187,9 +187,11 @@ const char *run_init(const char *realroot, const char *console,
 	/* Okay, I think we should be safe... */
 
 	if (!dry_run) {
-		/* Delete rootfs contents */
-		if (nuke_dir("/"))
-			return "nuking initramfs contents";
+		if (!persist_initramfs) {
+			/* Delete rootfs contents */
+			if (nuke_dir("/"))
+				return "nuking initramfs contents";
+		}
 
 		/* Overmount the root */
 		if (mount(".", "/", NULL, MS_MOVE, NULL))

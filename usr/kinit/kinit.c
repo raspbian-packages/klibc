@@ -305,7 +305,7 @@ int main(int argc, char *argv[])
 
 	errmsg = run_init("/root", "/dev/console",
 			  get_arg(cmdc, cmdv, "drop_capabilities="), false,
-			  init_path, init_argv);
+			  false, init_path, init_argv);
 
 	/* If run_init returned, something went bad */
 	fprintf(stderr, "%s: %s: %s\n", progname, errmsg, strerror(errno));

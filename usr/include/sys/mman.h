@@ -7,7 +7,7 @@
 
 #include <klibc/extern.h>
 #include <sys/types.h>
-#include <asm/mman.h>
+#include <linux/mman.h>
 
 #define MAP_FAILED ((void *)-1)
 

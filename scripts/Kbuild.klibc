@@ -100,7 +100,7 @@ KLIBCAR          := $(AR)
 # The second will be used for reproducible builds, the first otherwise.
 klibc-ar = $(KLIBCAR) $(if $(KBUILD_REPRODUCIBLE),$(2),$(1))
 
-KLIBCRANLIB      := $(call klibc-ar,s,Ds)
+KLIBCRANLIB      := $(RANLIB) $(if $(KBUILD_REPRODUCIBLE),-D)
 KLIBCSTRIP       := $(if $(CONFIG_DEBUG_INFO),true,$(STRIP))
 KLIBCNM          := $(NM)
 KLIBCOBJCOPY     := $(OBJCOPY)

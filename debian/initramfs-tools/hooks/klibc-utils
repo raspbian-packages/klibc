@@ -19,10 +19,18 @@ prereqs)
 	;;
 esac
 
-# klibc
-cp -pnL /usr/lib/klibc/bin/* "${DESTDIR}/bin"
+for src in /usr/lib/klibc/bin/*; do
+	command="$(basename "$src")"
+	case "$command" in
+	gzip | kinit | zcat)
+		# Don't install; these will not be needed
+		;;
+	*)
+		# Don't install commands that already exist in /bin or /sbin
+		if ! [ -e "${DESTDIR}/sbin/$command" ]; then
+			cp -pnL "$src" "${DESTDIR}/bin"
+		fi
+		;;
+	esac
+done
 cp -pL /lib/klibc-*.so "${DESTDIR}/lib"
-rm -f "${DESTDIR}"/bin/kinit*
-if [ "${BUSYBOX}" = "n" ] || [ -z "${BUSYBOXDIR}" ]; then
-	rm -f "${DESTDIR}/bin/zcat"
-fi

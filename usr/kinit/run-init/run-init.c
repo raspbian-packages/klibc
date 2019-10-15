@@ -26,7 +26,7 @@
  * ----------------------------------------------------------------------- */
 
 /*
- * Usage: exec run-init [-d caps] [-c /dev/console] [-n] /real-root /sbin/init "$@"
+ * Usage: exec run-init [-d caps] [-c /dev/console] [-n] [-p] /real-root /sbin/init "$@"
  *
  * This program should be called as the last thing in a shell script
  * acting as /init in an initramfs; it does the following:
@@ -37,6 +37,9 @@
  * 4. Chroots;
  * 5. Opens /dev/console;
  * 6. Spawns the specified init program (with arguments.)
+ *
+ * With the -p option, it skips step 1 in order to allow the initramfs to
+ * be persisted into the running system.
  *
  * With the -n option, it skips steps 1, 2 and 6 and can be used to check
  * whether the given root and init are likely to work.
@@ -55,7 +58,7 @@ static const char *program;
 static void __attribute__ ((noreturn)) usage(void)
 {
 	fprintf(stderr,
-		"Usage: exec %s [-d caps] [-c consoledev] [-n] /real-root /sbin/init [args]\n",
+		"Usage: exec %s [-d caps] [-c consoledev] [-n] [-p] /real-root /sbin/init [args]\n",
 		program);
 	exit(1);
 }
@@ -69,6 +72,7 @@ int main(int argc, char *argv[])
 	const char *error;
 	const char *drop_caps = NULL;
 	bool dry_run = false;
+	bool persist_initramfs = false;
 	char **initargs;
 
 	/* Variables... */
@@ -77,13 +81,15 @@ int main(int argc, char *argv[])
 	/* Parse the command line */
 	program = argv[0];
 
-	while ((o = getopt(argc, argv, "c:d:n")) != -1) {
+	while ((o = getopt(argc, argv, "c:d:pn")) != -1) {
 		if (o == 'c') {
 			console = optarg;
 		} else if (o == 'd') {
 			drop_caps = optarg;
 		} else if (o == 'n') {
 			dry_run = true;
+		} else if (o == 'p') {
+			persist_initramfs = true;
 		} else {
 			usage();
 		}
@@ -96,7 +102,7 @@ int main(int argc, char *argv[])
 	init = argv[optind + 1];
 	initargs = argv + optind + 1;
 
-	error = run_init(realroot, console, drop_caps, dry_run, init, initargs);
+	error = run_init(realroot, console, drop_caps, dry_run, persist_initramfs, init, initargs);
 
 	if (error) {
 		fprintf(stderr, "%s: %s: %s\n", program, error, strerror(errno));

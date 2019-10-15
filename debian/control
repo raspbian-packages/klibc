@@ -1,8 +1,8 @@
 Source: klibc
 Priority: optional
-Maintainer: maximilian attems <maks@debian.org>
-Uploaders: Ben Hutchings <ben@decadent.org.uk>
-Build-Depends: debhelper (>= 9~), linux-libc-dev, m4 [sparc sparc64]
+Maintainer: Debian Kernel Team <debian-kernel@lists.debian.org>
+Uploaders: Ben Hutchings <ben@decadent.org.uk>, maximilian attems <maks@debian.org>
+Build-Depends: debhelper (>= 9~), linux-libc-dev, m4 [sparc]
 # klcc will depend on ccache if it was installed at build time; see #777217
 Build-Conflicts: ccache
 Section: libs

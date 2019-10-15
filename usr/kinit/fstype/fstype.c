@@ -113,88 +113,7 @@ static int minix_image(const void *buf, unsigned long long *bytes)
 	return 0;
 }
 
-/*
- * Check to see if a filesystem is in /proc/filesystems.
- * Returns 1 if found, 0 if not
- */
-static int fs_proc_check(const char *fs_name)
-{
-	FILE	*f;
-	char	buf[80], *cp, *t;
-
-	f = fopen("/proc/filesystems", "r");
-	if (!f)
-		return 0;
-	while (fgets(buf, sizeof(buf), f)) {
-		cp = buf;
-		if (!isspace(*cp)) {
-			while (*cp && !isspace(*cp))
-				cp++;
-		}
-		while (*cp && isspace(*cp))
-			cp++;
-		t = strchr(cp, '\n');
-		if (t != NULL)
-			*t = 0;
-		t = strchr(cp, '\t');
-		if (t != NULL)
-			*t = 0;
-		t = strchr(cp, ' ');
-		if (t != NULL)
-			*t = 0;
-		if (!strcmp(fs_name, cp)) {
-			fclose(f);
-			return 1;
-		}
-	}
-	fclose(f);
-	return 0;
-}
-
-/*
- * Check to see if a filesystem is available as a module
- * Returns 1 if found, 0 if not
- */
-static int check_for_modules(const char *fs_name)
-{
-	struct utsname	uts;
-	FILE		*f;
-	char		buf[1024], *cp, *t;
-	int		i;
-
-	if (uname(&uts))
-		return 0;
-	snprintf(buf, sizeof(buf), "/lib/modules/%s/modules.dep", uts.release);
-
-	f = fopen(buf, "r");
-	if (!f)
-		return 0;
-	while (fgets(buf, sizeof(buf), f)) {
-		cp = strchr(buf, ':');
-		if (cp == NULL)
-			continue;
-		*cp = 0;
-		cp = strrchr(buf, '/');
-		if (cp == NULL)
-			continue;
-		cp++;
-		i = strlen(cp);
-		if (i > 3) {
-			t = cp + i - 3;
-			if (!strcmp(t, ".ko"))
-				*t = 0;
-		}
-		if (!strcmp(cp, fs_name)) {
-			fclose(f);
-			return 1;
-		}
-	}
-	fclose(f);
-	return 0;
-}
-
-static int base_ext4_image(const void *buf, unsigned long long *bytes,
-			   int *test_fs)
+static int ext4_image(const void *buf, unsigned long long *bytes)
 {
 	const struct ext3_super_block *sb =
 		(const struct ext3_super_block *)buf;
@@ -209,41 +128,9 @@ static int base_ext4_image(const void *buf, unsigned long long *bytes,
 	     & __cpu_to_le32(EXT3_FEATURE_RO_COMPAT_UNSUPPORTED))) {
 		*bytes = (unsigned long long)__le32_to_cpu(sb->s_blocks_count)
 			<< (10 + __le32_to_cpu(sb->s_log_block_size));
-		*test_fs = (sb->s_flags &
-			    __cpu_to_le32(EXT2_FLAGS_TEST_FILESYS)) != 0;
 		return 1;
 	}
 	return 0;
-}
-
-static int ext4_image(const void *buf, unsigned long long *bytes)
-{
-	int ret, test_fs, ext4dev_present, ext4_present;
-
-	ret = base_ext4_image(buf, bytes, &test_fs);
-	if (ret == 0)
-		return 0;
-	ext4dev_present = (fs_proc_check("ext4dev") ||
-			   check_for_modules("ext4dev"));
-	ext4_present = (fs_proc_check("ext4") || check_for_modules("ext4"));
-	if ((test_fs || !ext4_present) && ext4dev_present)
-		return 0;
-	return 1;
-}
-
-static int ext4dev_image(const void *buf, unsigned long long *bytes)
-{
-	int ret, test_fs, ext4dev_present, ext4_present;
-
-	ret = base_ext4_image(buf, bytes, &test_fs);
-	if (ret == 0)
-		return 0;
-	ext4dev_present = (fs_proc_check("ext4dev") ||
-			   check_for_modules("ext4dev"));
-	ext4_present = (fs_proc_check("ext4") || check_for_modules("ext4"));
-	if ((!test_fs || !ext4dev_present) && ext4_present)
-		return 0;
-	return 1;
 }
 
 static int ext3_image(const void *buf, unsigned long long *bytes)
@@ -496,7 +383,6 @@ static struct imagetype images[] = {
 	{0, "romfs", romfs_image},
 	{0, "xfs", xfs_image},
 	{0, "squashfs", squashfs_image},
-	{1, "ext4dev", ext4dev_image},
 	{1, "ext4", ext4_image},
 	{1, "ext3", ext3_image},
 	{1, "ext2", ext2_image},

@@ -4,63 +4,42 @@
 #export DH_VERBOSE=1
 
 include /usr/share/dpkg/architecture.mk
-export DEB_HOST_MULTIARCH
 
+# klibc architecture names mostly match Debian CPU names.  This is
+# overrridden as necessary.
+KLIBCARCH := $(patsubst %el,%,$(DEB_HOST_ARCH_CPU))
+
+ifneq (,$(filter amd64 x32,$(DEB_HOST_ARCH)))
+KLIBCARCH := x86_64
+endif
 ifeq ($(DEB_HOST_ARCH),armel)
-DEB_MAKE_ENVVARS := ARCH=arm CONFIG_AEABI=y
+KLIBC_MAKEFLAGS := CONFIG_AEABI=y
 endif
 ifeq ($(DEB_HOST_ARCH),armhf)
-DEB_MAKE_ENVVARS := ARCH=arm CONFIG_AEABI=y CPU_ARCH=armv6 CPU_TUNE=arm1176jzf-s CONFIG_KLIBC_THUMB=n
+KLIBC_MAKEFLAGS := CONFIG_AEABI=y CPU_ARCH=armv6 CPU_TUNE=arm1176jzf-s CONFIG_KLIBC_THUMB=n
 endif
-ifeq ($(DEB_HOST_ARCH),ia64)
-DEB_MAKE_ENVVARS := ARCH=ia64
-endif
-ifeq ($(DEB_HOST_ARCH),i386)
-DEB_MAKE_ENVVARS := ARCH=i386
-endif
-ifeq ($(DEB_HOST_ARCH),sparc)
-DEB_MAKE_ENVVARS := ARCH=sparc
-endif
-ifeq ($(DEB_HOST_ARCH),sparc64)
-DEB_MAKE_ENVVARS := ARCH=sparc64
-endif
-ifeq ($(DEB_HOST_ARCH),s390)
-DEB_MAKE_ENVVARS := ARCH=s390
-endif
-ifeq ($(DEB_HOST_ARCH),s390x)
-DEB_MAKE_ENVVARS := ARCH=s390x
+ifeq ($(DEB_HOST_ARCH),hppa)
+KLIBCARCH := parisc
 endif
 ifneq (,$(filter powerpc%,$(DEB_HOST_ARCH)))
-DEB_MAKE_ENVVARS := ARCH=ppc
-endif
-ifneq (,$(filter mips mipsel,$(DEB_HOST_ARCH)))
-DEB_MAKE_ENVVARS := ARCH=mips
-endif
-ifneq (,$(filter mips64 mips64el,$(DEB_HOST_ARCH)))
-DEB_MAKE_ENVVARS := ARCH=mips64
+KLIBCARCH := ppc
 endif
 ifeq ($(DEB_HOST_ARCH),sh4)
-DEB_MAKE_ENVVARS := ARCH=sh
-endif
-ifneq (,$(filter ppc64%,$(DEB_HOST_ARCH)))
-DEB_MAKE_ENVVARS := ARCH=ppc64
-endif
-ifeq ($(DEB_HOST_ARCH),riscv64)
-DEB_MAKE_ENVVARS := ARCH=riscv64
+KLIBCARCH := sh
 endif
 
-DEB_MAKE_ENVVARS := INSTALLROOT=debian/tmp $(DEB_MAKE_ENVVARS)
+KLIBC_MAKEFLAGS := INSTALLROOT=debian/tmp ARCH=$(KLIBCARCH) $(KLIBC_MAKEFLAGS)
 
 ifneq ($(DEB_HOST_GNU_TYPE),$(DEB_BUILD_GNU_TYPE))
-    DEB_MAKE_ENVVARS += CROSS_COMPILE=$(DEB_HOST_GNU_TYPE)-
+    KLIBC_MAKEFLAGS += CROSS_COMPILE=$(DEB_HOST_GNU_TYPE)-
 endif
 
 
 # Enable this to get verbose build information
-DEB_MAKE_ENVVARS += KBUILD_VERBOSE=1
+KLIBC_MAKEFLAGS += KBUILD_VERBOSE=1
 
 # Defer stripping of debug symbols to debhelper
-DEB_MAKE_ENVVARS += CONFIG_DEBUG_INFO=y
+KLIBC_MAKEFLAGS += CONFIG_DEBUG_INFO=y
 
 %:
 	dh $@ --link-doc=libklibc
@@ -72,14 +51,14 @@ override_dh_auto_build:
 		/usr/include/$(DEB_HOST_MULTIARCH)/asm; do \
 		ln -s $${x} linux/include || exit; \
 	done
-	$(MAKE) all $(DEB_MAKE_ENVVARS)
+	$(MAKE) all $(KLIBC_MAKEFLAGS)
 
 override_dh_auto_clean:
 	rm -rf linux test-*.log
-	MAKEFLAGS="$(DEB_MAKE_ENVVARS)" dh_auto_clean
+	MAKEFLAGS="$(KLIBC_MAKEFLAGS)" dh_auto_clean
 
 override_dh_auto_install:
-	$(MAKE) install $(DEB_MAKE_ENVVARS)
+	$(MAKE) install $(KLIBC_MAKEFLAGS)
 # Replace kernel UAPI header copies with links
 	for x in /usr/include/linux /usr/include/asm-generic \
 		/usr/include/$(DEB_HOST_MULTIARCH)/asm; do \
@@ -98,7 +77,8 @@ endef
 comma=,
 
 override_dh_auto_test:
-	$(MAKE) test $(DEB_MAKE_ENVVARS)
+ifeq ($(filter nocheck,$(DEB_BUILD_OPTIONS)),)
+	$(MAKE) test $(KLIBC_MAKEFLAGS)
 	$(call run_test_program,microhello)
 	$(call run_test_program,minihello)
 	$(call run_test_program,hello)
@@ -118,6 +98,7 @@ override_dh_auto_test:
 	$(call run_test_program,vfork)
 	usr/dash/static/sh -c "exit"
 	usr/dash/static/sh -c "usr/utils/static/true; exit"
+endif
 
 override_dh_fixperms:
 	dh_fixperms -X.so

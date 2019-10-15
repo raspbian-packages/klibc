@@ -32,6 +32,7 @@
 
 const char *run_init(const char *realroot, const char *console,
 		     const char *drop_caps, bool dry_run,
-		     const char *init, char **initargs);
+		     bool persist_initramfs, const char *init,
+		     char **initargs);
 
 #endif

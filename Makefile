@@ -98,11 +98,11 @@ $(objtree)/.config: $(srctree)/defconfig
 	@echo "defconfig has changed, please remove or edit .config"
 	@false
 
-$(KLIBCKERNELSRC):
-	@echo "Cannot find kernel UAPI headers."
-	@echo "Either make a 'linux' symlink point to the usr subdirectory "
-	@echo "of a kernel tree with headers installed for the $(KLIBCARCH) "
-	@echo "architecture or specify KLIBCKERNELSRC=<path>."
+$(KLIBCKERNELSRC)/include:
+	@echo 'Missing kernel UAPI headers in $(KLIBCKERNELSRC)/include.'
+	@echo 'Install them by running:'
+	@echo '    make headers_install INSTALL_HDR_PATH=$(abspath $(KLIBCKERNELSRC))'
+	@echo 'in the kernel source directory.'
 	@false
 
 rpmbuild = $(shell which rpmbuild 2>/dev/null || which rpm)
@@ -111,10 +111,10 @@ klibc.spec: klibc.spec.in $(KLIBCSRC)/version
 	sed -e 's/@@VERSION@@/$(VERSION)/g' < $< > $@
 
 # Build klcc - it is the first target
-klcc: $(objtree)/.config $(KLIBCKERNELSRC)
+klcc: $(objtree)/.config $(KLIBCKERNELSRC)/include
 	$(Q)$(MAKE) $(klibc)=klcc
 
-klibc: $(objtree)/.config $(KLIBCKERNELSRC)
+klibc: $(objtree)/.config $(KLIBCKERNELSRC)/include
 	$(Q)$(MAKE) $(klibc)=.
 
 test: klibc
