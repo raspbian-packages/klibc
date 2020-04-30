@@ -228,7 +228,7 @@ int sigprocmask(int, const sigset_t *, sigset_t *);
 <sh,sparc,alpha,ppc,sparc64> int sigsuspend::__sigsuspend_s(sigset_t);
 <arm,frv,i386,m68k,mn10300,s390,s390x> int sigsuspend::__sigsuspend_xxs(int, int, sigset_t);
 #endif
-<s390,s390x,sparc64> void rt_sigreturn::__sigreturn();
+<s390,s390x,sparc,sparc64> void rt_sigreturn::__sigreturn();
 int kill(pid_t, int);
 <?> unsigned int alarm(unsigned int);
 int getitimer(int, struct itimerval *);
