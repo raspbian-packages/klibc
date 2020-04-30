@@ -18,6 +18,5 @@ KLIBCARCHREQFLAGS	+= -D__sparc32__
 # and call instructions have a 30-bit signed offset, << 2.
 KLIBCSHAREDFLAGS	 = -Ttext-segment 0x40000000
 
-# Kernel uses stack trampoline for signal return unless we set
-# sa_restorer
-KLIBCEXECSTACK := y
+# Kernel uses our sa_restorer for signal return
+KLIBCEXECSTACK := n
