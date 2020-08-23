@@ -9,7 +9,7 @@
 
 always  := crt0.o
 targets := crt0.o
-klib-y := pipe.o setjmp.o syscall.o sysdual.o
+klib-y := pipe.o setjmp.o sigreturn.o syscall.o sysdual.o
 
 # Special CFLAGS for the divide code
 DIVCFLAGS = $(KLIBCREQFLAGS) $(KLIBCARCHREQFLAGS) \
