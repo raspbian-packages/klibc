@@ -13,7 +13,7 @@ __extern int __rt_sigaction(int, const struct sigaction *, struct sigaction *,
 			    void (*)(void), size_t);
 #elif defined(__alpha__)
 __extern int __rt_sigaction(int, const struct sigaction *, struct sigaction *,
-			    size_t, void *);
+			    size_t, void (*)(void));
 #else
 __extern int __rt_sigaction(int, const struct sigaction *, struct sigaction *,
 			    size_t);
@@ -52,7 +52,7 @@ int sigaction(int sig, const struct sigaction *act, struct sigaction *oact)
 		rv = __rt_sigaction(sig, act, oact, restorer, sizeof(sigset_t));
 	}
 # elif defined(__alpha__)
-	rv = __rt_sigaction(sig, act, oact, sizeof(sigset_t), NULL);
+	rv = __rt_sigaction(sig, act, oact, sizeof(sigset_t), &__sigreturn);
 # else
 	rv = __rt_sigaction(sig, act, oact, sizeof(sigset_t));
 # endif
