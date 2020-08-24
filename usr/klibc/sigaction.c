@@ -30,8 +30,6 @@ int sigaction(int sig, const struct sigaction *act, struct sigaction *oact)
 		sa = *act;
 		act = &sa;
 
-		/* The kernel can't be trusted to have a valid default
-		   restorer */
 		sa.sa_flags |= SA_RESTORER;
 		sa.sa_restorer = &__sigreturn;
 	}
