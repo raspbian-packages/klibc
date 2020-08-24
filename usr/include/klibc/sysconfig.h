@@ -154,7 +154,8 @@
  *
  *	Some architectures, like x86-64 and some i386 Fedora kernels,
  *	do not provide a default sigreturn, and therefore must have
- *	SA_RESTORER set.
+ *	SA_RESTORER set.  On others, the default sigreturn requires an
+ *	executable stack, which we should avoid.
  */
 #ifndef _KLIBC_NEEDS_SA_RESTORER
 # define _KLIBC_NEEDS_SA_RESTORER 0
