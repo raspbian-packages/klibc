@@ -21,19 +21,26 @@ __extern int __rt_sigaction(int, const struct sigaction *, struct sigaction *,
 
 int sigaction(int sig, const struct sigaction *act, struct sigaction *oact)
 {
+	unsigned int needed_flags = 0
+#if _KLIBC_NEEDS_SA_RESTORER
+		| SA_RESTORER
+#endif
+#if _KLIBC_NEEDS_SA_SIGINFO
+		| SA_SIGINFO
+#endif
+		;
+	struct sigaction sa;
 	int rv;
 
-#if _KLIBC_NEEDS_SA_RESTORER
-	struct sigaction sa;
-
-	if (act && !(act->sa_flags & SA_RESTORER)) {
+	if (act && (act->sa_flags & needed_flags) != needed_flags) {
 		sa = *act;
-		act = &sa;
-
-		sa.sa_flags |= SA_RESTORER;
-		sa.sa_restorer = &__sigreturn;
-	}
+		sa.sa_flags |= needed_flags;
+#if _KLIBC_NEEDS_SA_RESTORER
+		if (!(act->sa_flags & SA_RESTORER))
+			sa.sa_restorer = &__sigreturn;
 #endif
+		act = &sa;
+	}
 
 #if _KLIBC_USE_RT_SIG
 # ifdef __sparc__
