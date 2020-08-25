@@ -163,6 +163,20 @@
 
 
 /*
+ * _KLIBC_NEEDS_SA_SIGINFO:
+ *
+ *	On some architectures, the signal stack frame is set up for
+ *	either sigreturn() or rt_sigreturn() depending on whether
+ *	SA_SIGINFO is set.  Where this is the case, and we provide our
+ *	own restorer function, this must also be set so that the
+ *	restorer can always use rt_sigreturn().
+ */
+#ifndef _KLIBC_NEEDS_SA_SIGINFO
+# define _KLIBC_NEEDS_SA_SIGINFO 0
+#endif
+
+
+/*
  * _KLIBC_STATFS_F_TYPE_64:
  *
  *	This indicates that the f_type, f_bsize, f_namelen,
