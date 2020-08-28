@@ -22,8 +22,8 @@ struct sigaction {
 		__sighandler_t _sa_handler;
 		void (*_sa_sigaction) (int, struct siginfo *, void *);
 	} _u;
-	sigset_t sa_mask;
-	int sa_flags;
+	unsigned long	sa_flags;
+	sigset_t	sa_mask;
 };
 
 #define sa_handler      _u._sa_handler
