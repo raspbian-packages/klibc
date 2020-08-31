@@ -21,3 +21,7 @@ endif
 
 KLIBCASMARCH		= s390
 KLIBCSHAREDFLAGS	= -Ttext-segment 0x40000000
+
+# Kernel uses stack trampoline for signal return unless we set
+# sa_restorer
+KLIBCEXECSTACK := y

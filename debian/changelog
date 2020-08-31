@@ -1,9 +1,30 @@
-klibc (2.0.7-1+rpi1) bullseye-staging; urgency=medium
+klibc (2.0.8-1+rpi1) bullseye-staging; urgency=medium
 
   [changes brought forward from 2.0.4-2+rpi1 by Peter Michael Green <plugwash@p10link.net> at Wed, 26 Nov 2014 22:01:00 +0000]
   * Change compiler settings to values suitable for raspberry pi
 
- -- Peter Michael Green <plugwash@raspbian.org>  Tue, 15 Oct 2019 13:14:45 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Mon, 31 Aug 2020 20:11:44 +0000
+
+klibc (2.0.8-1) unstable; urgency=medium
+
+  [ Ben Hutchings ]
+  * New upstream version:
+    - ipconfig: Ignore NTP server address and any additional fields
+      (Closes: #931416)
+    - Kbuild: Add "-fcommon" for clang builds (Closes: #957405)
+    - Kbuild: Add a per-architecture option to disable exectable stacks
+    - arch: Explicitly disable or enable executable stacks (Closes: #959070)
+  * debian/control: Use my debian.org email in Uploaders field
+  * Use debhelper compatibility level 12:
+    - Build-Depend on debhelper-compat and remove debian/compat
+    - debian/klibc-utils.triggers: Delete as redundant
+  * debian/rules: Really disable stripping libc.so in libklibc-dev
+
+  [ Debian Janitor ]
+  * Trim trailing whitespace.
+  * Set upstream metadata fields: Repository.
+
+ -- Ben Hutchings <benh@debian.org>  Fri, 21 Aug 2020 01:34:13 +0100
 
 klibc (2.0.7-1) unstable; urgency=medium
 
@@ -350,7 +371,7 @@ klibc (2.0~rc4-1) unstable; urgency=low
     - drop merged m68k-support
   * armel: Set arm arch for cross compiling.
   * klibc-linux-libc-dev: Adapt for cross building (closes: #666389)
-    Based on Marcin Juszkiewicz <marcin.juszkiewicz@linaro.org> 
+    Based on Marcin Juszkiewicz <marcin.juszkiewicz@linaro.org>
 
  -- maximilian attems <maks@debian.org>  Fri, 18 May 2012 14:48:04 +0200
 

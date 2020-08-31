@@ -45,6 +45,7 @@ stdio.shared-y		:= stdio.o
 strlcpycat.shared-y	:= strlcpycat.o
 strtoimax.shared-y	:= strtoimax.o
 strtotime.shared-y	:= strtotime.o
+sysconf.shared-y	:= sysconf.o
 testrand48.shared-y	:= testrand48.o
 testvsnp.shared-y	:= testvsnp.o
 vfork.shared-y		:= vfork.o

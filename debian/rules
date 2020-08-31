@@ -103,5 +103,6 @@ endif
 override_dh_fixperms:
 	dh_fixperms -X.so
 
-override dh_strip:
+override_dh_strip:
 	dh_strip -pklibc-utils -plibklibc
+	dh_strip -plibklibc-dev -X.so

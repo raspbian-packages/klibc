@@ -153,7 +153,7 @@ static int run_linuxrc(int argc, char *argv[], dev_t root_dev)
 			int olddev = open(ramdisk_name, O_RDWR);
 			umount2("/old", MNT_DETACH);
 			if (olddev < 0 ||
-			    ioctl(olddev, BLKFLSBUF, (long)0) ||
+			    ioctl(olddev, BLKFLSBUF, 0) ||
 			    close(olddev)) {
 				fprintf(stderr,
 					"%s: Cannot flush initrd contents\n",

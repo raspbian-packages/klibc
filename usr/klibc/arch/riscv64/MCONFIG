@@ -17,4 +17,7 @@ endif
 KLIBCBITSIZE      = 64
 
 # Normal binaries start at 64 KB, so start the libary at 2 MB.
-KLIBCSHAREDFLAGS  =-Ttext-segment 0x00200000
+KLIBCSHAREDFLAGS  = $(LD_IMAGE_BASE_OPT) 0x00200000
+
+# Kernel has never used stack trampolines
+KLIBCEXECSTACK := n

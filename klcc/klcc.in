@@ -218,7 +218,7 @@ if ( $debugging ) {
 if ( $operation ne '' ) {
     # Just run gcc with the appropriate options
     @outopt = ('-o', $output) if ( defined($output) );
-    $rv = mysystem($CC, @ccopt, @outopt, files_with_lang(\@files, \%flang));
+    $rv = mysystem(@CC, @ccopt, @outopt, files_with_lang(\@files, \%flang));
 } else {
     if ( scalar(@files) == 0 ) {
 	die "$0: No input files!\n";
@@ -241,7 +241,7 @@ if ( $operation ne '' ) {
 	    push(@objs, $fo);
 	    push(@rmobjs, $fo) unless ( $save_temps );
 
-	    $rv = mysystem($CC, @ccopt, '-c', '-o', $fo, '-x', $flang{$f}, $f);
+	    $rv = mysystem(@CC, @ccopt, '-c', '-o', $fo, '-x', $flang{$f}, $f);
 
 	    if ( $rv ) {
 		unlink(@rmobjs);
@@ -251,18 +251,18 @@ if ( $operation ne '' ) {
     }
 
     # Get the libgcc pathname for the *current* gcc
-    open(LIBGCC, '-|', $CC, @ccopt, '-print-libgcc-file-name')
+    open(LIBGCC, '-|', @CC, @ccopt, '-print-libgcc-file-name')
 	or die "$0: cannot get libgcc filename\n";
     $libgcc = <LIBGCC>;
     chomp $libgcc;
     close(LIBGCC);
 
     if ( $shared ) {
-	$rv = mysystem($LD, @LDFLAGS, @sharedopt, @ldopt, @outopt, @objs,
+	$rv = mysystem(@LD, @LDFLAGS, @sharedopt, @ldopt, @outopt, @objs,
 		       @libs, @stdlibpath, '--start-group', @sharedlib,
 		       $libgcc, '--end-group');
     } else {
-	$rv = mysystem($LD, @LDFLAGS, @staticopt, @ldopt, @outopt, @objs,
+	$rv = mysystem(@LD, @LDFLAGS, @staticopt, @ldopt, @outopt, @objs,
 		       @libs, @stdlibpath, '--start-group', @staticlib,
 		       $libgcc, '--end-group');
     }
@@ -270,7 +270,7 @@ if ( $operation ne '' ) {
     unlink(@rmobjs);
 
     if ( $strip && !$rv ) {
-	$rv = mysystem($STRIP, @STRIPFLAGS, $output);
+	$rv = mysystem(@STRIP, @STRIPFLAGS, $output);
     }
 }
 

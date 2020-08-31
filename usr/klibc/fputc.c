@@ -12,3 +12,4 @@ int fputc(int c, FILE *f)
 
 	return _fwrite(&ch, 1, f) == 1 ? ch : EOF;
 }
+__ALIAS(int, fputc_unlocked, (int, FILE *), fputc)

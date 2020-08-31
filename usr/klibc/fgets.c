@@ -25,3 +25,4 @@ char *fgets(char *s, int n, FILE *f)
 
 	return s;
 }
+__ALIAS(char *, fgets_unlocked, (char *, int, FILE *), fgets)

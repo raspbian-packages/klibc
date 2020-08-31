@@ -13,3 +13,4 @@ int fputs(const char *s, FILE *file)
 {
 	return _fwrite(s, strlen(s), file);
 }
+__ALIAS(int, fputs_unlocked, (const char *, FILE *), fputs)

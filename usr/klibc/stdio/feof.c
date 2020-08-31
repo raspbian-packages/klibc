@@ -5,3 +5,4 @@ int feof(FILE *__f)
 {
 	return __f->_IO_eof;
 }
+__ALIAS(int, feof_unlocked, (FILE *), feof)

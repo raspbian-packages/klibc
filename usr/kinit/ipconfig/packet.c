@@ -86,7 +86,7 @@ static unsigned int ip_checksum(uint16_t *hdr, int len)
 struct header {
 	struct iphdr ip;
 	struct udphdr udp;
-} __attribute__ ((packed));
+} __attribute__ ((packed, aligned(4)));
 
 static struct header ipudp_hdrs = {
 	.ip = {

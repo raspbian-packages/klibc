@@ -11,3 +11,5 @@ size_t fwrite(const void *ptr, size_t size, size_t nmemb, FILE * f)
 {
 	return _fwrite(ptr, size * nmemb, f) / size;
 }
+__ALIAS(size_t, fwrite_unlocked, (const void *, size_t, size_t, FILE *),
+	fwrite)

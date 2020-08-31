@@ -17,3 +17,7 @@ KLIBCARCHREQFLAGS	+= -D__sparc32__
 # Normal binaries start at 64K; the linker wants 64K alignment,
 # and call instructions have a 30-bit signed offset, << 2.
 KLIBCSHAREDFLAGS	 = -Ttext-segment 0x40000000
+
+# Kernel uses stack trampoline for signal return unless we set
+# sa_restorer
+KLIBCEXECSTACK := y

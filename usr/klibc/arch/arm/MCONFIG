@@ -33,3 +33,6 @@ else
 KLIBCREQFLAGS += -mabi=apcs-gnu -mno-thumb-interwork
 endif
 endif
+
+# Kernel uses dedicated page or vDSO for signal return since 2.6.13
+KLIBCEXECSTACK := n

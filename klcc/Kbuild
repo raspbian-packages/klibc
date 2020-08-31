@@ -35,7 +35,7 @@ targets := $(KLIBCCROSS)klcc
 quiet_cmd_klcc = GEN     $@
       cmd_klcc = $(PERL) $< $(srctree)/$(src)/klcc.in \
                             $(obj)/$(KLIBCCROSS)klibc.config \
-                            $(shell bash -c 'type -p $(PERL)') \
+                            $(shell command -v $(PERL)) \
 			      > $@ || ( rm -f $@ ; exit 1 ) && \
 			      chmod a+x $@
 $(obj)/$(KLIBCCROSS)klcc: $(src)/makeklcc.pl $(src)/klcc.in \

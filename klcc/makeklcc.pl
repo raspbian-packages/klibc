@@ -34,21 +34,21 @@ while ( defined($l = <KLIBCCONF>) ) {
     chomp $l;
     if ( $l =~ /^([^=]+)\=\s*(.*)$/ ) {
 	$n = $1;  $s = $2;
+	my @s = split(/\s+/, $s);
 
 	if ( $n eq 'CC' || $n eq 'LD' || $n eq 'STRIP' ) {
-	    $s1 = pathsearch($s);
+	    $s1 = pathsearch($s[0]);
 	    die "$0: Cannot find $n: $s\n" unless ( defined($s1) );
-	    $s = $s1;
+	    $s[0] = $s1;
 	}
 
 	print "\$$n = \"\Q$s\E\";\n";
 	print "\$conf{\'\L$n\E\'} = \\\$$n;\n";
 
 	print "\@$n = ("; $sep = '';
-	while ( $s =~ /^\s*(\S+)/ ) {
-	    print $sep, "\"\Q$1\E\"";
+	for (@s) {
+	    print $sep, "\"\Q$_\E\"";
 	    $sep = ', ';
-	    $s = "$'";
 	}
 	print ");\n";
     }

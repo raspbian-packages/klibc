@@ -34,7 +34,7 @@ static int change_disk(const char *devpath, int rfd, int disk)
 			ioctl(rfd, CDROMEJECT, 0);
 		} else {
 			/* Non-ejectable floppy */
-			ioctl(rfd, FDRESET, FD_RESET_IF_NEEDED);
+			ioctl(rfd, FDRESET, (void *)FD_RESET_IF_NEEDED);
 		}
 	}
 	close(rfd);

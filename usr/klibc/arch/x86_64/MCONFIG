@@ -15,8 +15,10 @@
 # debugging using gdb.
 #
 KLIBCARCHREQFLAGS = -m64
-KLIBCOPTFLAGS	+= -Os -fomit-frame-pointer -mno-sse \
-		-falign-functions=1 -falign-jumps=1 -falign-loops=1
+KLIBCOPTFLAGS     += -Os -fomit-frame-pointer -mno-sse \
+                     $(call cc-option,-falign-functions=1, )	\
+                     $(call cc-option,-falign-jumps=1, )	\
+                     $(call cc-option,-falign-loops=1, )
 ifeq ($(DEBUG),y)
 KLIBCOPTFLAGS     += -g
 else
@@ -35,4 +37,7 @@ KLIBCLDFLAGS      = -m elf_x86_64
 # The old default was max-page-size=0x100000, but that also results
 # in a broken layout with binutils 2.30.  Since there's no
 # architectural page size betwen 4 KB and 2MB, set it to 4 KB.
-KLIBCSHAREDFLAGS     = -Ttext-segment 0x00200000 -z max-page-size=0x1000
+KLIBCSHAREDFLAGS     = $(LD_IMAGE_BASE_OPT) 0x00200000 -z max-page-size=0x1000
+
+# Kernel has never used stack trampolines
+KLIBCEXECSTACK := n

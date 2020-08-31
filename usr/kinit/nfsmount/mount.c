@@ -34,13 +34,13 @@ struct mount_call {
 struct nfs_fh_wire {
 	uint32_t size;
 	char data[NFS_MAXFHSIZE_WIRE];
-} __attribute__ ((packed));
+} __attribute__ ((packed, aligned(4)));
 
 struct mount_reply {
 	struct rpc_reply reply;
 	uint32_t status;
 	struct nfs_fh_wire fh;
-} __attribute__ ((packed));
+} __attribute__ ((packed, aligned(4)));
 
 #define MNT_REPLY_MINSIZE (sizeof(struct rpc_reply) + sizeof(uint32_t))
 

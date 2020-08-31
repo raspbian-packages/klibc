@@ -69,6 +69,8 @@ include $(srctree)/scripts/Kbuild.include
 KLIBCREQFLAGS     := $(call cc-option, -fno-stack-protector, ) \
                      $(call cc-option, -fwrapv, ) \
                      $(call cc-option, -fno-PIE, ) \
+                     $(call cc-option, -fno-builtin-bcmp, ) \
+                     $(call cc-option, -fcommon, ) \
                      -ggdb
 KLIBCARCHREQFLAGS :=
 KLIBCOPTFLAGS     :=
@@ -108,15 +110,22 @@ KLIBCOBJDUMP     := $(OBJDUMP)
 
 # klibc include paths
 KLIBCCPPFLAGS    := -nostdinc -iwithprefix include \
-		    -I$(KLIBCINC)/arch/$(KLIBCARCHDIR)	\
+                    -I$(KLIBCINC)/arch/$(KLIBCARCHDIR)	\
                     -I$(KLIBCINC)/bits$(KLIBCBITSIZE)	\
-		    -I$(KLIBCOBJ)/../include		\
+                    -I$(KLIBCOBJ)/../include		\
                     -I$(KLIBCINC)
+ifeq ($(cc-name),clang)
+KLIBCCPPFLAGS    += -I$(shell $(KLIBCCC) $(KLIBCCFLAGS) --print-file-name=include)
+endif
+
 # kernel include paths
 KLIBCKERNELSRC	 ?= $(srctree)
 KLIBCCPPFLAGS    += -I$(KLIBCKERNELSRC)/include		\
                      $(if $(KBUILD_SRC),-I$(srctree)/include)  \
 		     $(KLIBCARCHINCFLAGS)
+
+# compiler/assembler option for whether we want an executable stack
+KLIBCSTACKFLAGS  := -Wa,--$(if $(filter n,$(KLIBCEXECSTACK)),no)execstack
 
 # klibc definitions
 KLIBCDEFS        += -D__KLIBC__=$(KLIBCMAJOR)          \
@@ -124,12 +133,12 @@ KLIBCDEFS        += -D__KLIBC__=$(KLIBCMAJOR)          \
 		    -D_BITSIZE=$(KLIBCBITSIZE)
 KLIBCCPPFLAGS    += $(KLIBCDEFS)
 KLIBCCFLAGS      += $(KLIBCCPPFLAGS) $(KLIBCREQFLAGS) $(KLIBCARCHREQFLAGS)  \
-                    $(KLIBCOPTFLAGS) $(KLIBCWARNFLAGS)
+                    $(KLIBCOPTFLAGS) $(KLIBCSTACKFLGS) $(KLIBCWARNFLAGS)
 KLIBCAFLAGS      += -D__ASSEMBLY__ $(KLIBCCFLAGS)
 KLIBCSTRIPFLAGS  += --strip-all -R .comment -R .note
 
-KLIBCLIBGCC_DEF  := $(shell $(KLIBCCC) $(KLIBCCFLAGS) --print-libgcc)
-KLIBCLIBGCC	 ?= $(KLIBCLIBGCC_DEF)
+KLIBCLIBGCC_DEF  := $(shell $(KLIBCCC) $(KLIBCCFLAGS) $(if $(filter gcc,$(cc-name)),--print-libgcc,--print-libgcc-file-name))
+KLIBCLIBGCC      ?= $(KLIBCLIBGCC_DEF)
 KLIBCCRT0        := $(KLIBCOBJ)/arch/$(KLIBCARCHDIR)/crt0.o
 KLIBCLIBC        := $(KLIBCOBJ)/libc.a
 KLIBCCRTSHARED   := $(KLIBCOBJ)/interp.o
@@ -352,7 +361,7 @@ quiet_cmd_ld-shared = KLIBCLD $@
                        $(KLIBCEMAIN) $(KLIBCCRTSHARED)		\
                        --start-group				\
                        $(link-deps)				\
-                       -R $(KLIBCLIBCSHARED)			\
+                       --just-symbols $(KLIBCLIBCSHARED)	\
 	               $(KLIBCLIBGCC)				\
 		       --end-group ;				\
                       cp -f $@ $@.g ;				\

@@ -143,13 +143,13 @@ __extern int optind, opterr, optopt;
 __extern int isatty(int);
 
 __extern unsigned int __page_size;
-static __inline__ int getpagesize(void)
+__must_inline int getpagesize(void)
 {
 	return __page_size;
 }
 
 __extern unsigned int __page_shift;
-static __inline__ int __getpageshift(void)
+__must_inline int __getpageshift(void)
 {
 	return __page_shift;
 }
@@ -160,5 +160,8 @@ __extern int daemon(int, int);
 #define STDIN_FILENO	0
 #define STDOUT_FILENO	1
 #define STDERR_FILENO	2
+
+/* This #include must be at the end */
+#include <sys/sysconf.h>
 
 #endif				/* _UNISTD_H */

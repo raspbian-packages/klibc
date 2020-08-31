@@ -17,3 +17,7 @@ KLIBCBITSIZE  = 32
 # script right.  Not sure if there is a fundamental reason
 # to not duck below the halfway point...
 KLIBCSHAREDFLAGS        = -Ttext-segment 0xb0000000
+
+# Kernel uses stack trampoline for signal return.  Also m68k
+# page tables do not have an execute permission bit.
+KLIBCEXECSTACK := y

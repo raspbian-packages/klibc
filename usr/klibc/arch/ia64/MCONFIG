@@ -12,3 +12,6 @@ KLIBCOPTFLAGS += -Os
 KLIBCBITSIZE  = 64
 
 KLIBCSHAREDFLAGS = -T $(src)/arch/$(KLIBCARCH)/klibc.ld
+
+# Kernel has never used stack trampolines
+KLIBCEXECSTACK := n

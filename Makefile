@@ -27,6 +27,9 @@ export NM	:= $(KLIBCROSS)nm
 export OBJCOPY  := $(KLIBCROSS)objcopy
 export OBJDUMP  := $(KLIBCROSS)objdump
 
+LLD := $(shell $(LD) --version 2>&1 | grep LLD)
+export LD_IMAGE_BASE_OPT=$(if $(LLD),--image-base,-Ttext-segment)
+
 NOSTDINC_FLAGS := -nostdlib -nostdinc -isystem $(shell $(CC) -print-file-name=include)
 
 ARCH	          := $(shell uname -m | sed -e s/i.86/i386/ \

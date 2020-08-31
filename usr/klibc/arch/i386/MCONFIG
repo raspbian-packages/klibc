@@ -30,4 +30,7 @@ KLIBCBITSIZE  = 32
 # This address needs to be reachable using normal inter-module
 # calls, and work on the memory models for this architecture
 # 96 MB - normal binaries start at 128 MB
-KLIBCSHAREDFLAGS	= -Ttext-segment 0x06000000
+KLIBCSHAREDFLAGS	= $(LD_IMAGE_BASE_OPT) 0x06000000
+
+# Kernel uses dedicated page or vDSO for signal return since 2.5.55
+KLIBCEXECSTACK := n

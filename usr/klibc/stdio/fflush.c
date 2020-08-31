@@ -56,5 +56,5 @@ int fflush(FILE *file)
 		return err;
 	}
 }
-
+__ALIAS(int, fflush_unlocked, (FILE *), fflush)
 
