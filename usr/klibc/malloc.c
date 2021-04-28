@@ -147,6 +147,15 @@ void *malloc(size_t size)
 	if (size == 0)
 		return NULL;
 
+	/* Various additions below will overflow if size is close to
+	   SIZE_MAX.  Further, it's not legal for a C object to be
+	   larger than PTRDIFF_MAX (half of SIZE_MAX) as pointer
+	   arithmetic within it could overflow. */
+	if (size > PTRDIFF_MAX) {
+		errno = ENOMEM;
+		return NULL;
+	}
+
 	/* Add the obligatory arena header, and round up */
 	size = (size + 2 * sizeof(struct arena_header) - 1) & ARENA_SIZE_MASK;
 
