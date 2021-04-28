@@ -17,6 +17,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <malloc.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -904,6 +905,15 @@ static void read_in_new_ascii(struct new_cpio_header *file_hdr, int in_des)
 		file_hdr->c_hdr[i] = strtoul(hexbuf, NULL, 16);
 		ah += 8;
 	}
+
+	/* Sizes > LONG_MAX can currently result in integer overflow
+	   in various places.  Fail if name is too large. */
+	if (file_hdr->c_namesize > LONG_MAX) {
+		fprintf(stderr, "%s: name size out of range\n",
+			progname);
+		exit(1);
+	}
+
 	/* Read file name from input.  */
 	free(file_hdr->c_name);
 	file_hdr->c_name = (char *)xmalloc(file_hdr->c_namesize);
@@ -914,6 +924,14 @@ static void read_in_new_ascii(struct new_cpio_header *file_hdr, int in_des)
 	   is rounded up to the next long-word, so we might need to drop
 	   1-3 bytes.  */
 	tape_skip_padding(in_des, file_hdr->c_namesize + 110);
+
+	/* Fail if file is too large.  We could check this earlier
+	   but it's helpful to report the name. */
+	if (file_hdr->c_filesize > LONG_MAX) {
+		fprintf(stderr, "%s: %s: file size out of range\n",
+			progname, file_hdr->c_name);
+		exit(1);
+	}
 }
 
 /* Return 16-bit integer I with the bytes swapped.  */
