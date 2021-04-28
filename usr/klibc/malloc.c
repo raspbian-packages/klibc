@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #include <assert.h>
+#include <errno.h>
 #include "malloc.h"
 
 /* Both the arena list and the free memory list are double linked
@@ -169,6 +170,7 @@ void *malloc(size_t size)
 #endif
 
 	if (fp == (struct free_arena_header *)MAP_FAILED) {
+		errno = ENOMEM;
 		return NULL;	/* Failed to get a block */
 	}
 
