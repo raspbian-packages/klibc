@@ -832,7 +832,7 @@ static void copyin_link(struct new_cpio_header *file_hdr, int in_file_des)
 	char *link_name = NULL;	/* Name of hard and symbolic links.  */
 	int res;		/* Result of various function calls.  */
 
-	link_name = (char *)xmalloc((unsigned int)file_hdr->c_filesize + 1);
+	link_name = (char *)xmalloc(file_hdr->c_filesize + 1);
 	link_name[file_hdr->c_filesize] = '\0';
 	tape_buffered_read(link_name, in_file_des, file_hdr->c_filesize);
 	tape_skip_padding(in_file_des, file_hdr->c_filesize);
