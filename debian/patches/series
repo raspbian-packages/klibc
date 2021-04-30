@@ -1,0 +1,12 @@
+0001-klibc-alpha-Fix-definitions-of-_NSIG-and-struct-siga.patch
+0001-klibc-signal-Note-another-reason-to-define-_KLIBC_NE.patch
+0002-klibc-signal-Add-sysconfig-setting-to-force-SA_SIGIN.patch
+0003-klibc-s390-Set-sa_restorer-for-signals-and-disable-e.patch
+0004-klibc-alpha-Pass-restorer-to-rt_sigaction-and-disabl.patch
+0005-klibc-sparc-Set-sa_restorer-for-signals-and-disable-.patch
+0001-klibc-ia64-Fix-definition-of-struct-sigaction.patch
+0035-klibc-malloc-Set-errno-on-failure.patch
+0036-klibc-malloc-Fail-if-requested-size-PTRDIFF_MAX.patch
+0037-klibc-calloc-Fail-if-multiplication-overflows.patch
+0039-klibc-cpio-Fix-possible-integer-overflow-on-32-bit-s.patch
+0040-klibc-cpio-Fix-possible-crash-on-64-bit-systems.patch

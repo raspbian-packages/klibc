@@ -1,0 +1,110 @@
+From: Ben Hutchings <ben@decadent.org.uk>
+Date: Sun, 23 Aug 2020 15:18:19 +0100
+Subject: [klibc] alpha: Pass restorer to rt_sigaction() and disable executable stack
+Origin: https://git.kernel.org/pub/scm/libs/klibc/klibc.git/commit/?id=570ed1e207cbe38ed487c722f8ac7db68e664a94
+
+alpha does not support the SA_RESTORER flag, but allows specifiying a
+restorer callback as an additional parameter to rt_sigaction().  We
+should do this to avoid needing an executable stack.
+
+* Force the SA_SIGINFO flag on for all signal handlers, so that we can
+  always return from them with rt_sigreturn
+* Define a __sigreturn() routine that calls rt_sigreturn
+* Pass that routine as the last argument to rt_sigaction()
+* Set KLIBCEXECSTACK=n
+
+Signed-off-by: Ben Hutchings <ben@decadent.org.uk>
+---
+ usr/include/arch/alpha/klibc/archconfig.h |  2 ++
+ usr/klibc/arch/alpha/Kbuild               |  2 +-
+ usr/klibc/arch/alpha/MCONFIG              |  5 ++---
+ usr/klibc/arch/alpha/sigreturn.S          | 18 ++++++++++++++++++
+ usr/klibc/sigaction.c                     |  4 ++--
+ 5 files changed, 25 insertions(+), 6 deletions(-)
+ create mode 100644 usr/klibc/arch/alpha/sigreturn.S
+
+diff --git a/usr/include/arch/alpha/klibc/archconfig.h b/usr/include/arch/alpha/klibc/archconfig.h
+index 272fee0a..9d28db12 100644
+--- a/usr/include/arch/alpha/klibc/archconfig.h
++++ b/usr/include/arch/alpha/klibc/archconfig.h
+@@ -10,6 +10,8 @@
+ #define _KLIBC_ARCHCONFIG_H
+ 
+ #define _KLIBC_USE_RT_SIG 1
++/* We provide our own restorer that call rt_sigreturn() */
++#define _KLIBC_NEEDS_SA_SIGINFO 1
+ #define _KLIBC_STATFS_F_TYPE_64 0
+ 
+ #endif				/* _KLIBC_ARCHCONFIG_H */
+diff --git a/usr/klibc/arch/alpha/Kbuild b/usr/klibc/arch/alpha/Kbuild
+index 2e566eb6..89386aea 100644
+--- a/usr/klibc/arch/alpha/Kbuild
++++ b/usr/klibc/arch/alpha/Kbuild
+@@ -9,7 +9,7 @@
+ 
+ always  := crt0.o
+ targets := crt0.o
+-klib-y := pipe.o setjmp.o syscall.o sysdual.o
++klib-y := pipe.o setjmp.o sigreturn.o syscall.o sysdual.o
+ 
+ # Special CFLAGS for the divide code
+ DIVCFLAGS = $(KLIBCREQFLAGS) $(KLIBCARCHREQFLAGS) \
+diff --git a/usr/klibc/arch/alpha/MCONFIG b/usr/klibc/arch/alpha/MCONFIG
+index 072adb85..e71db264 100644
+--- a/usr/klibc/arch/alpha/MCONFIG
++++ b/usr/klibc/arch/alpha/MCONFIG
+@@ -15,6 +15,5 @@ KLIBCBITSIZE  = 64
+ # the binary.
+ KLIBCSHAREDFLAGS	= -Ttext-segment 0x1c0000000
+ 
+-# Kernel uses stack trampoline for signal return unless we set
+-# sa_restorer
+-KLIBCEXECSTACK := y
++# Kernel uses our sa_restorer for signal return
++KLIBCEXECSTACK := n
+diff --git a/usr/klibc/arch/alpha/sigreturn.S b/usr/klibc/arch/alpha/sigreturn.S
+new file mode 100644
+index 00000000..a979b7a3
+--- /dev/null
++++ b/usr/klibc/arch/alpha/sigreturn.S
+@@ -0,0 +1,18 @@
++/*
++ * arch/alpha/sigreturn.S
++ */
++
++#include <machine/asm.h>
++#include <asm/unistd.h>
++
++	.text
++	.align	3
++	.type	__sigreturn,@function
++	.ent	__sigreturn,0
++	.globl	__sigreturn
++__sigreturn:
++	mov	sp,a0			# struct sigcontext on stack
++	lda	v0,__NR_rt_sigreturn(zero)
++	callsys
++	.size	__sigreturn,.-__sigreturn
++	.end	__sigreturn
+diff --git a/usr/klibc/sigaction.c b/usr/klibc/sigaction.c
+index dbf8e220..cd2fdfef 100644
+--- a/usr/klibc/sigaction.c
++++ b/usr/klibc/sigaction.c
+@@ -13,7 +13,7 @@ __extern int __rt_sigaction(int, const struct sigaction *, struct sigaction *,
+ 			    void (*)(void), size_t);
+ #elif defined(__alpha__)
+ __extern int __rt_sigaction(int, const struct sigaction *, struct sigaction *,
+-			    size_t, void *);
++			    size_t, void (*)(void));
+ #else
+ __extern int __rt_sigaction(int, const struct sigaction *, struct sigaction *,
+ 			    size_t);
+@@ -52,7 +52,7 @@ int sigaction(int sig, const struct sigaction *act, struct sigaction *oact)
+ 		rv = __rt_sigaction(sig, act, oact, restorer, sizeof(sigset_t));
+ 	}
+ # elif defined(__alpha__)
+-	rv = __rt_sigaction(sig, act, oact, sizeof(sigset_t), NULL);
++	rv = __rt_sigaction(sig, act, oact, sizeof(sigset_t), &__sigreturn);
+ # else
+ 	rv = __rt_sigaction(sig, act, oact, sizeof(sigset_t));
+ # endif
