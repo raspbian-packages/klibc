@@ -1,9 +1,52 @@
-klibc (2.0.8-1+rpi1) bullseye-staging; urgency=medium
+klibc (2.0.8-6+rpi1) bullseye-staging; urgency=medium
 
   [changes brought forward from 2.0.4-2+rpi1 by Peter Michael Green <plugwash@p10link.net> at Wed, 26 Nov 2014 22:01:00 +0000]
   * Change compiler settings to values suitable for raspberry pi
 
- -- Raspbian forward porter <root@raspbian.org>  Mon, 31 Aug 2020 20:11:44 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Sat, 08 May 2021 13:09:43 +0000
+
+klibc (2.0.8-6) unstable; urgency=medium
+
+  * Upload to unstable
+  * malloc: Set errno on failure
+  * malloc: Fail if requested size > PTRDIFF_MAX (CVE-2021-31873)
+  * calloc: Fail if multiplication overflows (CVE-2021-31870)
+  * cpio: Fix possible integer overflow on 32-bit systems (CVE-2021-31872)
+  * cpio: Fix possible crash on 64-bit systems (CVE-2021-31871)
+
+ -- Ben Hutchings <benh@debian.org>  Fri, 30 Apr 2021 03:05:23 +0200
+
+klibc (2.0.8-5) experimental; urgency=medium
+
+  * alpha: Fix definitions of _NSIG and struct sigaction
+  * ia64: Fix definition of struct sigaction
+
+ -- Ben Hutchings <benh@debian.org>  Fri, 28 Aug 2020 17:41:47 +0100
+
+klibc (2.0.8-4) experimental; urgency=medium
+
+  * signal: Note another reason to define _KLIBC_NEEDS_SA_RESTORER
+  * signal: Add sysconfig setting to force SA_SIGINFO on
+  * s390: Force SA_SIGINFO on and use rt_sigreturn
+  * alpha: Force SA_SIGINFO on
+  * sparc: Force SA_SIGINFO on
+
+ -- Ben Hutchings <benh@debian.org>  Tue, 25 Aug 2020 01:49:14 +0100
+
+klibc (2.0.8-3) experimental; urgency=medium
+
+  * s390: Define __sigreturn() on both s390 and s390x
+  * Revert "alpha: Set sa_restorer for signals and disable executable stack"
+  * alpha: Pass restorer to rt_sigaction() and disable executable stack
+
+ -- Ben Hutchings <benh@debian.org>  Sun, 23 Aug 2020 15:24:00 +0100
+
+klibc (2.0.8-2) experimental; urgency=medium
+
+  * {alpha,s390,sparc}: Set sa_restorer for signals and disable executable
+    stack
+
+ -- Ben Hutchings <benh@debian.org>  Sat, 22 Aug 2020 21:35:52 +0100
 
 klibc (2.0.8-1) unstable; urgency=medium
 
