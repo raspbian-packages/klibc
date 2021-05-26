@@ -1,0 +1,62 @@
+From: Ben Hutchings <ben@decadent.org.uk>
+Date: Thu, 30 Apr 2020 13:56:47 +0100
+Subject: [klibc] sparc: Set sa_restorer for signals and disable executable stack
+Origin: https://git.kernel.org/pub/scm/libs/klibc/klibc.git/commit/?id=05350b72cace18417c1ba00c4796a5e19ebb908b
+
+sparc allows specifiying a signal restorer in the usual way.  We
+should do this to avoid needing an executable stack.
+
+* Define a __sigreturn() routine that calls rt_sigreturn
+* Force the SA_RESTORER flag on for all signal handlers, and set
+  __sigreturn as the restorer if none is already set
+* Force the SA_SIGINFO flag on for all signal handlers, so that we can
+  always return from them with rt_sigreturn
+* Set KLIBCEXECSTACK=n
+
+Signed-off-by: Ben Hutchings <ben@decadent.org.uk>
+---
+ usr/include/arch/sparc/klibc/archconfig.h | 5 +++++
+ usr/klibc/SYSCALLS.def                    | 2 +-
+ usr/klibc/arch/sparc/MCONFIG              | 5 ++---
+ 3 files changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/usr/include/arch/sparc/klibc/archconfig.h b/usr/include/arch/sparc/klibc/archconfig.h
+index 70d5ef08..651b213d 100644
+--- a/usr/include/arch/sparc/klibc/archconfig.h
++++ b/usr/include/arch/sparc/klibc/archconfig.h
+@@ -12,4 +12,9 @@
+ #define _KLIBC_USE_RT_SIG 1	/* Use rt_* signals */
+ #define _KLIBC_SYS_SOCKETCALL 1 /* Use sys_socketcall unconditionally */
+ 
++/* So that we can avoid stack trampolines */
++#define _KLIBC_NEEDS_SA_RESTORER 1
++/* Our restorer will call rt_sigreturn() */
++#define _KLIBC_NEEDS_SA_SIGINFO 1
++
+ #endif				/* _KLIBC_ARCHCONFIG_H */
+diff --git a/usr/klibc/SYSCALLS.def b/usr/klibc/SYSCALLS.def
+index 30ff58b8..b639fceb 100644
+--- a/usr/klibc/SYSCALLS.def
++++ b/usr/klibc/SYSCALLS.def
+@@ -228,7 +228,7 @@ int sigprocmask(int, const sigset_t *, sigset_t *);
+ <sh,sparc,alpha,ppc,sparc64> int sigsuspend::__sigsuspend_s(sigset_t);
+ <arm,frv,i386,m68k,mn10300,s390,s390x> int sigsuspend::__sigsuspend_xxs(int, int, sigset_t);
+ #endif
+-<s390,s390x,sparc64> void rt_sigreturn::__sigreturn();
++<s390,s390x,sparc,sparc64> void rt_sigreturn::__sigreturn();
+ int kill(pid_t, int);
+ <?> unsigned int alarm(unsigned int);
+ int getitimer(int, struct itimerval *);
+diff --git a/usr/klibc/arch/sparc/MCONFIG b/usr/klibc/arch/sparc/MCONFIG
+index cabc7cd4..fb68ba3f 100644
+--- a/usr/klibc/arch/sparc/MCONFIG
++++ b/usr/klibc/arch/sparc/MCONFIG
+@@ -18,6 +18,5 @@ KLIBCARCHREQFLAGS	+= -D__sparc32__
+ # and call instructions have a 30-bit signed offset, << 2.
+ KLIBCSHAREDFLAGS	 = -Ttext-segment 0x40000000
+ 
+-# Kernel uses stack trampoline for signal return unless we set
+-# sa_restorer
+-KLIBCEXECSTACK := y
++# Kernel uses our sa_restorer for signal return
++KLIBCEXECSTACK := n
