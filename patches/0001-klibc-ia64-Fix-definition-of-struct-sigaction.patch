@@ -1,0 +1,28 @@
+From: Ben Hutchings <ben@decadent.org.uk>
+Date: Fri, 28 Aug 2020 17:36:34 +0100
+Subject: [klibc] ia64: Fix definition of struct sigaction
+Origin: https://git.kernel.org/pub/scm/libs/klibc/klibc.git/commit/?id=811bff9cec254e3396493f4f2447862d252870ac
+
+ia64 only provides the RT signal API, in which the type of sa_flags is
+unsigned long and sa_mask is the last member of the struct.
+
+Signed-off-by: Ben Hutchings <ben@decadent.org.uk>
+---
+ usr/include/arch/ia64/klibc/archsignal.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/usr/include/arch/ia64/klibc/archsignal.h b/usr/include/arch/ia64/klibc/archsignal.h
+index fbc961b4..7cfbf308 100644
+--- a/usr/include/arch/ia64/klibc/archsignal.h
++++ b/usr/include/arch/ia64/klibc/archsignal.h
+@@ -22,8 +22,8 @@ struct sigaction {
+ 		__sighandler_t _sa_handler;
+ 		void (*_sa_sigaction) (int, struct siginfo *, void *);
+ 	} _u;
+-	sigset_t sa_mask;
+-	int sa_flags;
++	unsigned long	sa_flags;
++	sigset_t	sa_mask;
+ };
+ 
+ #define sa_handler      _u._sa_handler

@@ -1,0 +1,83 @@
+From: Ben Hutchings <ben@decadent.org.uk>
+Date: Tue, 25 Aug 2020 01:05:28 +0100
+Subject: [klibc] signal: Add sysconfig setting to force SA_SIGINFO on
+Origin: https://git.kernel.org/pub/scm/libs/klibc/klibc.git/commit/?id=2a2a0b6b79c2470f529daabd5c193f58fe188337
+
+On alpha, arm, i386, m68k, powerpc, s390, sh, and sparc (32-bit), the
+kernel sets up the signal stack frame differently depending on the
+SA_SIGINFO flag, not whether the sigaction() or rt_sigaction() system
+call was used to install the handler.
+
+On alpha and sparc, we are going to start providing our own restorer
+that will call rt_sigaction(), so will need to ensure this flag is
+always set.
+
+Signed-off-by: Ben Hutchings <ben@decadent.org.uk>
+---
+ usr/include/klibc/sysconfig.h | 14 ++++++++++++++
+ usr/klibc/sigaction.c         | 21 ++++++++++++++-------
+ 2 files changed, 28 insertions(+), 7 deletions(-)
+
+diff --git a/usr/include/klibc/sysconfig.h b/usr/include/klibc/sysconfig.h
+index 4e38b1fd..5722e04f 100644
+--- a/usr/include/klibc/sysconfig.h
++++ b/usr/include/klibc/sysconfig.h
+@@ -162,6 +162,20 @@
+ #endif
+ 
+ 
++/*
++ * _KLIBC_NEEDS_SA_SIGINFO:
++ *
++ *	On some architectures, the signal stack frame is set up for
++ *	either sigreturn() or rt_sigreturn() depending on whether
++ *	SA_SIGINFO is set.  Where this is the case, and we provide our
++ *	own restorer function, this must also be set so that the
++ *	restorer can always use rt_sigreturn().
++ */
++#ifndef _KLIBC_NEEDS_SA_SIGINFO
++# define _KLIBC_NEEDS_SA_SIGINFO 0
++#endif
++
++
+ /*
+  * _KLIBC_STATFS_F_TYPE_64:
+  *
+diff --git a/usr/klibc/sigaction.c b/usr/klibc/sigaction.c
+index 37201f7d..dbf8e220 100644
+--- a/usr/klibc/sigaction.c
++++ b/usr/klibc/sigaction.c
+@@ -21,19 +21,26 @@ __extern int __rt_sigaction(int, const struct sigaction *, struct sigaction *,
+ 
+ int sigaction(int sig, const struct sigaction *act, struct sigaction *oact)
+ {
+-	int rv;
+-
++	unsigned int needed_flags = 0
+ #if _KLIBC_NEEDS_SA_RESTORER
++		| SA_RESTORER
++#endif
++#if _KLIBC_NEEDS_SA_SIGINFO
++		| SA_SIGINFO
++#endif
++		;
+ 	struct sigaction sa;
++	int rv;
+ 
+-	if (act && !(act->sa_flags & SA_RESTORER)) {
++	if (act && (act->sa_flags & needed_flags) != needed_flags) {
+ 		sa = *act;
++		sa.sa_flags |= needed_flags;
++#if _KLIBC_NEEDS_SA_RESTORER
++		if (!(act->sa_flags & SA_RESTORER))
++			sa.sa_restorer = &__sigreturn;
++#endif
+ 		act = &sa;
+-
+-		sa.sa_flags |= SA_RESTORER;
+-		sa.sa_restorer = &__sigreturn;
+ 	}
+-#endif
+ 
+ #if _KLIBC_USE_RT_SIG
+ # ifdef __sparc__
