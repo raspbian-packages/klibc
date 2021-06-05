@@ -1,0 +1,7 @@
+resume-backward-compatibility-for-resume_offset.patch
+0035-klibc-malloc-Set-errno-on-failure.patch
+0036-klibc-malloc-Fail-if-requested-size-PTRDIFF_MAX.patch
+0037-klibc-calloc-Fail-if-multiplication-overflows.patch
+0039-klibc-cpio-Fix-possible-integer-overflow-on-32-bit-s.patch
+0040-klibc-cpio-Fix-possible-crash-on-64-bit-systems.patch
+0041-klibc-set-long-jmp-s390x-save-restore-the-correct-re.patch
