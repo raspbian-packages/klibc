@@ -1,9 +1,17 @@
-klibc (2.0.8-6+rpi1) bullseye-staging; urgency=medium
+klibc (2.0.8-6.1+rpi1) bullseye-staging; urgency=medium
 
   [changes brought forward from 2.0.4-2+rpi1 by Peter Michael Green <plugwash@p10link.net> at Wed, 26 Nov 2014 22:01:00 +0000]
   * Change compiler settings to values suitable for raspberry pi
 
- -- Raspbian forward porter <root@raspbian.org>  Sat, 08 May 2021 13:09:43 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Thu, 10 Jun 2021 20:07:05 +0000
+
+klibc (2.0.8-6.1) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * {set,long}jmp [s390x]: save/restore the correct FPU registers
+    (f8‥f15 not f1/f3/f5/f7) (Closes: #943425)
+
+ -- Thorsten Glaser <tg@mirbsd.de>  Thu, 27 May 2021 00:12:10 +0200
 
 klibc (2.0.8-6) unstable; urgency=medium
 
