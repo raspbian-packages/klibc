@@ -1,9 +1,25 @@
-klibc (2.0.6-1+rpi1) buster-staging; urgency=medium
+klibc (2.0.6-1+rpi1+deb10u1) buster-staging; urgency=medium
 
   [changes brought forward from 2.0.4-2+rpi1 by Peter Michael Green <plugwash@p10link.net> at Wed, 26 Nov 2014 22:01:00 +0000]
   * Change compiler settings to values suitable for raspberry pi
 
- -- Raspbian forward porter <root@raspbian.org>  Thu, 07 Feb 2019 14:05:02 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Thu, 24 Jun 2021 18:49:17 +0000
+
+klibc (2.0.6-1+deb10u1) buster; urgency=medium
+
+  [ Ben Hutchings ]
+  * Apply security fixes from 2.0.9 (Closes: #989505):
+    - malloc: Set errno on failure
+    - malloc: Fail if requested size > PTRDIFF_MAX (CVE-2021-31873)
+    - calloc: Fail if multiplication overflows (CVE-2021-31870)
+    - cpio: Fix possible integer overflow on 32-bit systems (CVE-2021-31872)
+    - cpio: Fix possible crash on 64-bit systems (CVE-2021-31871)
+
+  [ Thorsten Glaser ]
+  * {set,long}jmp [s390x]: save/restore the correct FPU registers
+    (f8‥f15 not f1/f3/f5/f7) (Closes: #943425)
+
+ -- Ben Hutchings <benh@debian.org>  Sat, 05 Jun 2021 20:20:42 +0200
 
 klibc (2.0.6-1) unstable; urgency=medium
 

@@ -2,12 +2,17 @@
  * calloc.c
  */
 
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
-/* FIXME: This should look for multiplication overflow */
-
 void *calloc(size_t nmemb, size_t size)
 {
-	return zalloc(nmemb * size);
+	unsigned long prod;
+
+	if (__builtin_umull_overflow(nmemb, size, &prod)) {
+		errno = ENOMEM;
+		return NULL;
+	}
+	return zalloc(prod);
 }
