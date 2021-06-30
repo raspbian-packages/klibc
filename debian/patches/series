@@ -1,3 +1,4 @@
+never-clean-files-in-quilt-status-directory.patch
 klibc-linux-libc-dev
 multiarch-include-path
 Fix-minimal-mv-to-work-across-fs
@@ -17,3 +18,8 @@ gzip-fix-silent-fallback-to-decompression.patch
 klibc-mips-setjmp-s-don-t-save-and-restore-floating-point.patch
 syscalls-override-detection-of-direct-socket-syscalls-on-i386-m68k-s390.patch
 run-init-add-dry-run-mode.patch
+0035-klibc-malloc-Set-errno-on-failure.patch
+0036-klibc-malloc-Fail-if-requested-size-PTRDIFF_MAX.patch
+0037-klibc-calloc-Fail-if-multiplication-overflows.patch
+0039-klibc-cpio-Fix-possible-integer-overflow-on-32-bit-s.patch
+0040-klibc-cpio-Fix-possible-crash-on-64-bit-systems.patch

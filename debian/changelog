@@ -1,9 +1,23 @@
-klibc (2.0.4-9+rpi1) stretch-staging; urgency=medium
+klibc (2.0.4-9+rpi1+deb9u1) stretch-staging; urgency=medium
 
   [changes brought forward from 2.0.4-2+rpi1 by Peter Michael Green <plugwash@p10link.net> at Wed, 26 Nov 2014 22:01:00 +0000]
   * Change compiler settings to values suitable for raspberry pi
 
- -- Raspbian forward porter <root@raspbian.org>  Tue, 17 May 2016 23:45:58 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Wed, 30 Jun 2021 17:56:21 +0000
+
+klibc (2.0.4-9+deb9u1) stretch-security; urgency=high
+
+  * Never clean files in quilt status directory
+  * debian/rules: Use $(MAKE) for recursive make
+  * debian/rules: Change override_dh_auto_test rule to actually run tests
+  * Apply security fixes from 2.0.9 (Closes: #989505):
+    - malloc: Set errno on failure
+    - malloc: Fail if requested size > PTRDIFF_MAX (CVE-2021-31873)
+    - calloc: Fail if multiplication overflows (CVE-2021-31870)
+    - cpio: Fix possible integer overflow on 32-bit systems (CVE-2021-31872)
+    - cpio: Fix possible crash on 64-bit systems (CVE-2021-31871)
+
+ -- Ben Hutchings <benh@debian.org>  Mon, 28 Jun 2021 16:24:37 +0200
 
 klibc (2.0.4-9) unstable; urgency=medium
 
