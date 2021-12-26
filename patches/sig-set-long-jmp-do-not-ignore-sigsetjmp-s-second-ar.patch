@@ -1,0 +1,69 @@
+From: mirabilos <tg@debian.org>
+Date: Wed, 5 May 2021 21:02:37 +0200
+Subject: sig{set,long}jmp: do not ignore sigsetjmp's second argument
+Origin: https://git.kernel.org/pub/scm/libs/klibc/klibc.git/commit/?id=eb10cf8c3128612a089ace8489a81bc4ffd5d07a
+Bug-Debian: https://bugs.debian.org/988027
+
+Save and restore the signal mask only if that argument is nonzero,
+as required by the standards.  (Closes: Debian #988027)
+
+Signed-off-by: mirabilos <tg@debian.org>
+Signed-off-by: Ben Hutchings <ben@decadent.org.uk>
+---
+ usr/include/setjmp.h   | 7 ++++++-
+ usr/klibc/CAVEATS      | 3 +--
+ usr/klibc/siglongjmp.c | 3 ++-
+ 3 files changed, 9 insertions(+), 4 deletions(-)
+
+diff --git a/usr/include/setjmp.h b/usr/include/setjmp.h
+index abebccde..5916cd8a 100644
+--- a/usr/include/setjmp.h
++++ b/usr/include/setjmp.h
+@@ -27,6 +27,7 @@ __extern __noreturn longjmp(jmp_buf, int);
+ struct __sigjmp_buf {
+ 	jmp_buf __jmpbuf;
+ 	sigset_t __sigs;
++	unsigned char __sigs_saved;
+ };
+ 
+ typedef struct __sigjmp_buf sigjmp_buf[1];
+@@ -34,7 +35,11 @@ typedef struct __sigjmp_buf sigjmp_buf[1];
+ #define sigsetjmp(__env, __save) \
+ ({ \
+   struct __sigjmp_buf *__e = (__env); \
+-  sigprocmask(0, NULL, &__e->__sigs); \
++  if (__save) { \
++    sigprocmask(0, NULL, &__e->__sigs); \
++    __e->__sigs_saved = 1; \
++  } else \
++    __e->__sigs_saved = 0; \
+   setjmp(__e->__jmpbuf); \
+ })
+ 
+diff --git a/usr/klibc/CAVEATS b/usr/klibc/CAVEATS
+index 5e991cb7..39949c28 100644
+--- a/usr/klibc/CAVEATS
++++ b/usr/klibc/CAVEATS
+@@ -13,8 +13,7 @@ Compiling with -O0 is more likely to work on gcc 3.
+ setjmp()/longjmp():
+ -------------------
+ setjmp() and longjmp() *do not* save signal state.  sigsetjmp() and
+-siglongjmp() *do* save the signal mask -- regardless of the value of
+-the extra argument.
++siglongjmp() *do* save the signal mask if the extra argument is nonzero.
+ 
+ The standards actually state that if you pass longjmp() a final value
+ of zero the library should change that to a 1!  Presumably the reason
+diff --git a/usr/klibc/siglongjmp.c b/usr/klibc/siglongjmp.c
+index 31042cbd..45f4e400 100644
+--- a/usr/klibc/siglongjmp.c
++++ b/usr/klibc/siglongjmp.c
+@@ -10,6 +10,7 @@
+ 
+ __noreturn siglongjmp(sigjmp_buf buf, int retval)
+ {
+-	sigprocmask(SIG_SETMASK, &buf->__sigs, NULL);
++	if (buf->__sigs_saved)
++		sigprocmask(SIG_SETMASK, &buf->__sigs, NULL);
+ 	longjmp(buf->__jmpbuf, retval);
+ }
