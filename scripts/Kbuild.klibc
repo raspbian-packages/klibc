@@ -78,7 +78,7 @@ KLIBCWARNFLAGS    := -W -Wall -Wno-sign-compare -Wno-unused-parameter
 KLIBCSHAREDFLAGS  :=
 KLIBCBITSIZE      :=
 KLIBCLDFLAGS      :=
-KLIBCCFLAGS       :=
+KLIBCCFLAGS       := $(KCFLAGS)
 
 # Defaults for arch to override
 KLIBCARCHINCFLAGS =
