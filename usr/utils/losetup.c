@@ -6,6 +6,9 @@
  * losetup.c - setup and control loop devices
  */
 
+/* We want __u64 to be unsigned long long */
+#define __SANE_USERSPACE_TYPES__
+
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>

@@ -7,9 +7,6 @@
 # accordingly.
 #
 
-# We should get klibc.so and the executables to agree on what gp
-# should be.  For now, disable gp-relative addressing.
-KLIBCLDFLAGS      = --no-relax
 KLIBCOPTFLAGS	  += -Os -fomit-frame-pointer
 ifeq ($(DEBUG),y)
 KLIBCOPTFLAGS     += -g
@@ -18,6 +15,10 @@ KLIBCBITSIZE      = 64
 
 # Normal binaries start at 64 KB, so start the libary at 2 MB.
 KLIBCSHAREDFLAGS  = $(LD_IMAGE_BASE_OPT) 0x00200000
+KLIBCSHAREDFLAGS  += --defsym '__global_pointer$$=0'
 
 # Kernel has never used stack trampolines
 KLIBCEXECSTACK := n
+
+KLIBCEMAIN        := -e _main
+KLIBCCRTSHARED    += $(KLIBCOBJ)/arch/riscv64/_main.o

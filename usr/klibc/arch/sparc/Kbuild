@@ -8,7 +8,7 @@ targets := crt0.o
 m4-targets := sdiv.o srem.o udiv.o urem.o
 
 klib-y := $(m4-targets) smul.o umul.o __muldi3.o
-klib-y += setjmp.o pipe.o syscall.o sysfork.o
+klib-y += setjmp.o pipe.o sigaction.o syscall.o sysfork.o
 
 klib-y += ../../libgcc/__ashldi3.o ../../libgcc/__ashrdi3.o
 klib-y += ../../libgcc/__lshrdi3.o ../../libgcc/__divdi3.o

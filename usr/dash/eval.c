@@ -103,8 +103,8 @@ STATIC int bltincmd(int, char **);
 
 
 STATIC const struct builtincmd bltin = {
-	name: nullstr,
-	builtin: bltincmd
+	.name = nullstr,
+	.builtin = bltincmd
 };
 
 
@@ -274,7 +274,7 @@ checkexit:
 			n->nbinary.ch1,
 			(flags | ((isor >> 1) - 1)) & EV_TESTED
 		);
-		if (!exitstatus == isor)
+		if ((!exitstatus) == isor)
 			break;
 		if (!evalskip) {
 			n = n->nbinary.ch2;

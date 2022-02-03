@@ -177,6 +177,17 @@
 
 
 /*
+ * _KLIBC_NEEDS_SIGACTION_FIXUP
+ *
+ *	On some architectures, struct sigaction needs additional
+ *	changes before passing to the kernel.
+ */
+#ifndef _KLIBC_NEEDS_SIGACTION_FIXUP
+# define _KLIBC_NEEDS_SIGACTION_FIXUP 0
+#endif
+
+
+/*
  * _KLIBC_STATFS_F_TYPE_64:
  *
  *	This indicates that the f_type, f_bsize, f_namelen,

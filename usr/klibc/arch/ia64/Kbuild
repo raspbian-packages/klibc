@@ -2,7 +2,7 @@
 # klibc files for ia64
 #
 
-klib-y := vfork.o setjmp.o pipe.o syscall.o
+klib-y := vfork.o setjmp.o sigaction.o pipe.o syscall.o
 
 klib-y += ../../libgcc/__divdi3.o     ../../libgcc/__divsi3.o
 klib-y += ../../libgcc/__udivdi3.o    ../../libgcc/__udivsi3.o

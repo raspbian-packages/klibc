@@ -148,12 +148,13 @@ static int check_vrf(struct rpc_auth *vrf)
 
 static int dummy_portmap(int sock, FILE *portmap_file)
 {
+	enum { PAYLOAD_SIZE = MAX_UDP_PACKET + offsetof(struct rpc_header, udp) };
 	struct sockaddr_in sin;
 	int pktlen, addrlen;
 	union {
 		struct rpc_call rpc;
 		/* Max UDP packet size + unused TCP fragment size */
-		char payload[MAX_UDP_PACKET + offsetof(struct rpc_header, udp)];
+		char payload[PAYLOAD_SIZE];
 	} pkt;
 	struct rpc_call *rpc = &pkt.rpc;
 	struct rpc_auth *cred;

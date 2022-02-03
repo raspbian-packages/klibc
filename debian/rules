@@ -4,6 +4,10 @@
 #export DH_VERBOSE=1
 
 include /usr/share/dpkg/architecture.mk
+include /usr/share/dpkg/buildtools.mk
+
+empty :=
+space := $(empty) $(empty)
 
 # klibc architecture names mostly match Debian CPU names.  This is
 # overrridden as necessary.
@@ -16,7 +20,7 @@ ifeq ($(DEB_HOST_ARCH),armel)
 KLIBC_MAKEFLAGS := CONFIG_AEABI=y
 endif
 ifeq ($(DEB_HOST_ARCH),armhf)
-KLIBC_MAKEFLAGS := CONFIG_AEABI=y CPU_ARCH=armv6 CPU_TUNE=arm1176jzf-s CONFIG_KLIBC_THUMB=n
+KLIBC_MAKEFLAGS := CONFIG_AEABI=y CPU_ARCH=armv6+fp CPU_TUNE=arm1176jzf-s CONFIG_KLIBC_THUMB=n
 endif
 ifeq ($(DEB_HOST_ARCH),hppa)
 KLIBCARCH := parisc
@@ -28,12 +32,16 @@ ifeq ($(DEB_HOST_ARCH),sh4)
 KLIBCARCH := sh
 endif
 
-KLIBC_MAKEFLAGS := INSTALLROOT=debian/tmp ARCH=$(KLIBCARCH) $(KLIBC_MAKEFLAGS)
+KLIBC_MAKEFLAGS := -C debian/build -f $(CURDIR)/Makefile KBUILD_SRC=$(CURDIR) INSTALLROOT=../tmp ARCH=$(KLIBCARCH) $(KLIBC_MAKEFLAGS)
 
 ifneq ($(DEB_HOST_GNU_TYPE),$(DEB_BUILD_GNU_TYPE))
     KLIBC_MAKEFLAGS += CROSS_COMPILE=$(DEB_HOST_GNU_TYPE)-
 endif
+KLIBC_MAKEFLAGS += CC='$(CC)' HOSTCC='$(CC_FOR_BUILD)' LD='$(LD)'
 
+# Avoid embedding build directory.  We should be able to use just
+# -ffile-prefix-map, but that has no effect on assembly sources!
+KLIBC_MAKEFLAGS += KCFLAGS='-fdebug-prefix-map=$(CURDIR)/= -fmacro-prefix-map=$(CURDIR)/='
 
 # Enable this to get verbose build information
 KLIBC_MAKEFLAGS += KBUILD_VERBOSE=1
@@ -41,21 +49,24 @@ KLIBC_MAKEFLAGS += KBUILD_VERBOSE=1
 # Defer stripping of debug symbols to debhelper
 KLIBC_MAKEFLAGS += CONFIG_DEBUG_INFO=y
 
+# klcc will depend on ccache if it is in $PATH at build time; see #777217
+PATH := $(subst $(space),:,$(filter-out %/ccache %/ccache/,$(subst :,$(space),$(PATH))))
+
 %:
 	dh $@ --link-doc=libklibc
 
 override_dh_auto_build:
-	rm -rf linux
-	mkdir -p linux/include
+	rm -rf debian/build/linux
+	mkdir -p debian/build/linux/include
 	for x in /usr/include/linux /usr/include/asm-generic \
 		/usr/include/$(DEB_HOST_MULTIARCH)/asm; do \
-		ln -s $${x} linux/include || exit; \
+		ln -s $${x} debian/build/linux/include || exit; \
 	done
 	$(MAKE) all $(KLIBC_MAKEFLAGS)
+	! grep ccache debian/build/klcc/klcc
 
 override_dh_auto_clean:
-	rm -rf linux test-*.log
-	MAKEFLAGS="$(KLIBC_MAKEFLAGS)" dh_auto_clean
+	rm -rf debian/build
 
 override_dh_auto_install:
 	$(MAKE) install $(KLIBC_MAKEFLAGS)
@@ -68,10 +79,10 @@ override_dh_auto_install:
 	done
 
 define run_test_program
-usr/klibc/tests/$(1) > test-$(1).log
-! grep -qw ERROR test-$(1).log
-$(if $(2),grep -qF -- $(2) test-$(1).log)
-$(if $(3),grep -qF -- $(3) test-$(1).log)
+cd debian/build && usr/klibc/tests/$(1) > test-$(1).log
+! grep -qw ERROR debian/build/test-$(1).log
+$(if $(2),grep -qF -- $(2) debian/build/test-$(1).log)
+$(if $(3),grep -qF -- $(3) debian/build/test-$(1).log)
 endef
 
 comma=,
@@ -96,8 +107,8 @@ ifeq ($(filter nocheck,$(DEB_BUILD_OPTIONS)),)
 	$(call run_test_program,stdio,"Hello$(comma) World!","Hello again - and some more - and some more")
 	$(call run_test_program,strlcpycat)
 	$(call run_test_program,vfork)
-	usr/dash/static/sh -c "exit"
-	usr/dash/static/sh -c "usr/utils/static/true; exit"
+	debian/build/usr/dash/static/sh -c "exit"
+	debian/build/usr/dash/static/sh -c "debian/build/usr/utils/static/true; exit"
 endif
 
 override_dh_fixperms:

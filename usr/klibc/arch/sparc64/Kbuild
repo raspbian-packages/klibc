@@ -2,7 +2,7 @@
 # klibc files for sparc64
 #
 
-klib-y := pipe.o setjmp.o syscall.o sysfork.o
+klib-y := pipe.o setjmp.o sigaction.o syscall.o sysfork.o
 
 always  := crt0.o
 targets := crt0.o

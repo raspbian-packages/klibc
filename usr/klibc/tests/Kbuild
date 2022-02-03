@@ -10,6 +10,11 @@ test-files := $(notdir $(test-files))
 # of useless warnings unless we tell it not to.
 KLIBCCFLAGS_testvsnp.o := -Wno-format
 
+# This deliberately calls malloc() with unreasonably large values.  We
+# can't use cc-disable-warning here as the option to *enable* this
+# warning requires a value.
+KLIBCCFLAGS_malloctest3.o := $(call cc-option,-Wno-alloc-size-larger-than)
+
 static-y := $(test-files:.c=)
 shared-y := $(addsuffix .shared, $(static-y))
 
@@ -24,6 +29,7 @@ idtest.shared-y		:= idtest.o
 lseek.shared-y		:= lseek.o
 malloctest.shared-y	:= malloctest.o
 malloctest2.shared-y	:= malloctest2.o
+malloctest3.shared-y	:= malloctest3.o
 memstrtest.shared-y	:= memstrtest.o
 microhello.shared-y	:= microhello.o
 minihello.shared-y	:= minihello.o

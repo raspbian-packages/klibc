@@ -206,9 +206,10 @@ ssize_t sendfile64,sendfile::sendfile(int, int, off_t *, size_t, off_t);
  * sanitizing <signal.h> for all architectures, sigh.  See <klibc/config.h>.
  */
 #if _KLIBC_USE_RT_SIG
-<!sparc,sparc64,alpha> int rt_sigaction::__rt_sigaction(int, const struct sigaction *, struct sigaction *, size_t);
-<sparc,sparc64> int rt_sigaction::__rt_sigaction(int, const struct sigaction *, struct sigaction *, void *, size_t);
-<alpha> int rt_sigaction::__rt_sigaction(int, const struct sigaction *, struct sigaction *, size_t, void *);
+<!sparc,sparc64,alpha,ia64> int rt_sigaction::__rt_sigaction(int, const struct sigaction *, struct sigaction *, size_t);
+<sparc,sparc64> int rt_sigaction::____rt_sigaction(int, const struct sigaction *, struct sigaction *, void *, size_t);
+<alpha> int rt_sigaction::____rt_sigaction(int, const struct sigaction *, struct sigaction *, size_t, void *);
+<ia64> int rt_sigaction::____rt_sigaction(int, const struct sigaction *, struct sigaction *, size_t);
 int rt_sigsuspend::__rt_sigsuspend(const sigset_t *, size_t);
 int rt_sigpending::__rt_sigpending(sigset_t *, size_t);
 int rt_sigprocmask::__rt_sigprocmask(int, const sigset_t *, sigset_t *, size_t);
@@ -269,6 +270,7 @@ int uname(struct utsname *);
 int setdomainname(const char *, size_t);
 int sethostname(const char *, size_t);
 long init_module(void *, unsigned long, const char *);
+long finit_module(int, const char *, int);
 long delete_module(const char *, unsigned int);
 int reboot::__reboot(int, int, int, void *);
 int syslog::klogctl(int, char *, int);

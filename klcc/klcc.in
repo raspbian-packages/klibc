@@ -17,7 +17,7 @@ use IPC::Open3;
 # Options and libraries to pass to ld; shared versus static
 @staticopt = ("${prefix}/${KCROSS}lib/crt0.o");
 @staticlib = ("${prefix}/${KCROSS}lib/libc.a");
-@sharedopt = (@EMAIN, "${prefix}/${KCROSS}lib/interp.o");
+@sharedopt = (@EMAIN, map { "${prefix}/${KCROSS}lib/$_" } @CRTSHARED);
 @sharedlib = ('-R', "${prefix}/${KCROSS}lib/libc.so");
 
 # Returns the language (-x option string) for a specific extension.

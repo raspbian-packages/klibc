@@ -16,7 +16,7 @@ KLIBCARCHREQFLAGS	+= -D__sparc32__
 # calls, and work on the memory models for this architecture
 # Normal binaries start at 64K; the linker wants 64K alignment,
 # and call instructions have a 30-bit signed offset, << 2.
-KLIBCSHAREDFLAGS	 = -Ttext-segment 0x40000000
+KLIBCSHAREDFLAGS	 = $(LD_IMAGE_BASE_OPT) 0x40000000
 
 # Kernel uses our sa_restorer for signal return
 KLIBCEXECSTACK := n

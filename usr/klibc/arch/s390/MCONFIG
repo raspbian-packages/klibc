@@ -20,7 +20,7 @@ else
 endif
 
 KLIBCASMARCH		= s390
-KLIBCSHAREDFLAGS	= -Ttext-segment 0x40000000
+KLIBCSHAREDFLAGS	= $(LD_IMAGE_BASE_OPT) 0x40000000
 
 # Kernel uses our sa_restorer for signal return
 KLIBCEXECSTACK := n

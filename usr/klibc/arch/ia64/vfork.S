@@ -26,16 +26,12 @@ vfork:
 	mov	r15=__NR_clone
 	mov	out0=CLONE_VM|CLONE_VFORK|SIGCHLD
 	mov     out1=0
-	;;
 	break 0x100000      // Do the syscall
-	;;
-	addl	r15=0,r1
 	cmp.eq  p7,p6 = -1,r10
 	;;
-	ld8	r14=[r15]
+(p7)	movl r14 = errno
 	;;
 (p7)	st4	[r14]=r8
-	;;
 (p7)	mov	r8=-1
 	br.ret.sptk.many b0
 	.endp vfork

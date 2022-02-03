@@ -18,9 +18,6 @@ KLIBCBITSIZE  = 64
 # use the JAL instruction which requires a destination within the same
 # 256M aligned region. Since we can't put ourselves below the normal
 # load address, use the very top of the 256M region (minus 2MB)
-#
-# Use -Ttext-segment/--image_base so that the special .MIPS* sections
-# are moved as well.
 KLIBCSHAREDFLAGS     = $(LD_IMAGE_BASE_OPT) 0x12FE00000
 
 # Kernel uses vDSO for signal return since 2.6.34

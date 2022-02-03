@@ -71,7 +71,7 @@ $(obj)/typesize.c: $(srctree)/$(KLIBCSRC)/syscalls.pl $(obj)/SYSCALLS.i     \
 
 # Convert typesize.o to typesize.bin
 quiet_cmd_mkbin = OBJCOPY $@
-      cmd_mkbin = $(KLIBCOBJCOPY) -O binary $< $@
+      cmd_mkbin = $(KLIBCOBJCOPY) -O binary --only-section .rodata $< $@
 
 $(obj)/typesize.bin: $(obj)/typesize.o FORCE
 	$(call if_changed,mkbin)

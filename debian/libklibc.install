@@ -1,1 +1,1 @@
-debian/tmp/lib/klibc*.so
+lib/klibc*.so

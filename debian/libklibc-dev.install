@@ -1,5 +1,5 @@
-debian/tmp/usr/lib/klibc/include/*
-debian/tmp/usr/lib/klibc/lib/*.a
-debian/tmp/usr/lib/klibc/lib/*.o
-debian/tmp/usr/lib/klibc/lib/libc.so
-debian/tmp/usr/bin/klcc*
+usr/lib/klibc/include/*
+usr/lib/klibc/lib/*.a
+usr/lib/klibc/lib/*.o
+usr/lib/klibc/lib/libc.so
+usr/bin/klcc*

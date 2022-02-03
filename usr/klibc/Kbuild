@@ -132,7 +132,7 @@ klib-o-files = $(shell cat $(obj)/klib.list \
 targets += libc.a __static_init.o
 quiet_cmd_libc = KLIBCAR $@
       cmd_libc = rm -f $@;						\
-                 $(call klibc-ar,cq,Dcq) $@				\
+                 $(KLIBCAR) Dcq $@					\
 		 $(call objectify,__static_init.o) $(klib-o-files);	\
                  $(KLIBCRANLIB) $@
 
@@ -208,3 +208,6 @@ ifdef KLIBCSHAREDFLAGS
 	$(Q)$(install-lib) $(obj)/klibc-$(SOLIBHASH).so \
 	                      $(INSTALLROOT)$(SHLIBDIR)
 endif
+
+# Directories to visit during clean and install
+subdir- := arch/$(KLIBCARCHDIR)/

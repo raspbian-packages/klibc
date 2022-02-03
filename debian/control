@@ -3,8 +3,6 @@ Priority: optional
 Maintainer: Debian Kernel Team <debian-kernel@lists.debian.org>
 Uploaders: Ben Hutchings <benh@debian.org>, maximilian attems <maks@debian.org>
 Build-Depends: debhelper-compat (= 12), linux-libc-dev, m4 [sparc]
-# klcc will depend on ccache if it was installed at build time; see #777217
-Build-Conflicts: ccache
 Section: libs
 Standards-Version: 4.1.2
 Vcs-Browser: https://salsa.debian.org/kernel-team/klibc
@@ -15,7 +13,8 @@ Homepage: https://git.kernel.org/cgit/libs/klibc/klibc.git
 Package: libklibc-dev
 Section: libdevel
 Architecture: linux-any
-Depends: libklibc (= ${binary:Version}), linux-libc-dev, ${misc:Depends}
+Depends: libklibc (= ${binary:Version}), linux-libc-dev, ${misc:Depends},
+ ${perl:Depends}
 Description: kernel headers used during the build of klibc
  This package contains the set of kernel headers that were required to
  build klibc and the utilities that ship with it.  This may or may

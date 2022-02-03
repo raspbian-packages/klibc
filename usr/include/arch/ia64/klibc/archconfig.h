@@ -13,5 +13,8 @@
 #define _KLIBC_NO_MMU 0
 /* IA64 doesn't have sys_vfork, it has architecture-specific code */
 #define _KLIBC_REAL_VFORK 1
+/* Need to fix-up function pointers to function descriptor pointers
+ * in struct sigaction */
+#define _KLIBC_NEEDS_SIGACTION_FIXUP 1
 
 #endif				/* _KLIBC_ARCHCONFIG_H */

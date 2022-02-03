@@ -9,7 +9,7 @@
 
 KLIBCOPTFLAGS += -Os -fomit-frame-pointer
 KLIBCBITSIZE  = 32
-KLIBCSHAREDFLAGS	= -Ttext-segment 0x40001000
+KLIBCSHAREDFLAGS	= $(LD_IMAGE_BASE_OPT) 0x40001000
 
 # Kernel uses stack trampoline for signal return
 KLIBCEXECSTACK := y

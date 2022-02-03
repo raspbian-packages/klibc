@@ -3,20 +3,22 @@
  */
 
 #include <signal.h>
+#include <stddef.h>
 #include <sys/syscall.h>
 #include <klibc/sysconfig.h>
 
 __extern void __sigreturn(void);
-__extern int __sigaction(int, const struct sigaction *, struct sigaction *);
-#ifdef __sparc__
-__extern int __rt_sigaction(int, const struct sigaction *, struct sigaction *,
-			    void (*)(void), size_t);
-#elif defined(__alpha__)
-__extern int __rt_sigaction(int, const struct sigaction *, struct sigaction *,
-			    size_t, void (*)(void));
+
+#if _KLIBC_NEEDS_SIGACTION_FIXUP
+typedef struct sigaction *act_type;
 #else
-__extern int __rt_sigaction(int, const struct sigaction *, struct sigaction *,
-			    size_t);
+typedef const struct sigaction *act_type;
+#endif
+
+#if _KLIBC_USE_RT_SIG
+__extern int __rt_sigaction(int, act_type, struct sigaction *, size_t);
+#else
+__extern int __sigaction(int, act_type, struct sigaction *);
 #endif
 
 int sigaction(int sig, const struct sigaction *act, struct sigaction *oact)
@@ -32,7 +34,9 @@ int sigaction(int sig, const struct sigaction *act, struct sigaction *oact)
 	struct sigaction sa;
 	int rv;
 
-	if (act && (act->sa_flags & needed_flags) != needed_flags) {
+	if (act &&
+	    ((act->sa_flags & needed_flags) != needed_flags ||
+	     _KLIBC_NEEDS_SIGACTION_FIXUP)) {
 		sa = *act;
 		sa.sa_flags |= needed_flags;
 #if _KLIBC_NEEDS_SA_RESTORER
@@ -43,21 +47,16 @@ int sigaction(int sig, const struct sigaction *act, struct sigaction *oact)
 	}
 
 #if _KLIBC_USE_RT_SIG
-# ifdef __sparc__
-	{
-		void (*restorer)(void);
-		restorer = (act && act->sa_flags & SA_RESTORER)
-			? (void (*)(void))((uintptr_t)act->sa_restorer - 8)
-			: NULL;
-		rv = __rt_sigaction(sig, act, oact, restorer, sizeof(sigset_t));
-	}
-# elif defined(__alpha__)
-	rv = __rt_sigaction(sig, act, oact, sizeof(sigset_t), &__sigreturn);
-# else
-	rv = __rt_sigaction(sig, act, oact, sizeof(sigset_t));
-# endif
+	/* Check that we have the right signal API definitions */
+	(void)sizeof(char[_NSIG >= 64 ? 1 : -1]);
+	(void)sizeof(char[sizeof(sigset_t) * 8 >= _NSIG ? 1 : -1]);
+	(void)sizeof(char[offsetof(struct sigaction, sa_mask)
+			  + sizeof(sigset_t) == sizeof(struct sigaction)
+			  ? 1 : -1]);
+
+	rv = __rt_sigaction(sig, (act_type)act, oact, sizeof(sigset_t));
 #else
-	rv = __sigaction(sig, act, oact);
+	rv = __sigaction(sig, (act_type)act, oact);
 #endif
 
 #if _KLIBC_NEEDS_SA_RESTORER

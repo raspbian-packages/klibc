@@ -16,7 +16,7 @@ KLIBCBITSIZE  = 32
 # 2816 MB - normal binaries start at 2048 MB if I read the link
 # script right.  Not sure if there is a fundamental reason
 # to not duck below the halfway point...
-KLIBCSHAREDFLAGS        = -Ttext-segment 0xb0000000
+KLIBCSHAREDFLAGS        = $(LD_IMAGE_BASE_OPT) 0xb0000000
 
 # Kernel uses stack trampoline for signal return.  Also m68k
 # page tables do not have an execute permission bit.

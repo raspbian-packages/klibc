@@ -92,26 +92,18 @@ don't need the kernel source as well.  You can either:
 2. Set the KLIBCKERNELSRC variable on the "make" command line to
    point to the *parent* of the UAPI headers directory.
 
-Reproducible builds
--------------------
-
-Static libraries usually contain file timestamps, which are not
-reproducible.  Set KBUILD_REPRODUCIBLE=1 on the "make" command line to
-disable this.
-
 Architecture support
 ====================
 
 The following is the last known status of various architectures:
 
-   alpha:	 Mostly working
+   alpha:	 Working
    arm-thumb:	 Working
    arm:		 Working
    arm64:	 Working
-   avr32:	 Not yet ported
    h8300:	 Not yet ported
    i386:	 Working
-   ia64:	 Mostly working
+   ia64:	 Working
    m68k:	 Working
    mips:	 Working
    mips64:	 Working
@@ -119,10 +111,10 @@ The following is the last known status of various architectures:
    parisc64:	 Not yet ported
    ppc:		 Working
    ppc64:	 Working
+   riscv64:	 Working
    s390:	 Working
    s390x:	 Working
    sh:		 Working
-   sh64:	 Not yet ported
    sparc:	 Working
    sparc64:	 Working
    x86-64:	 Working
