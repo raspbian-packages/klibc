@@ -1,9 +1,26 @@
-klibc (2.0.10-4+rpi1) bookworm-staging; urgency=medium
+klibc (2.0.11-1+rpi1) bookworm-staging; urgency=medium
 
   [changes brought forward from 2.0.4-2+rpi1 by Peter Michael Green <plugwash@p10link.net> at Wed, 26 Nov 2014 22:01:00 +0000]
   * Change compiler settings to values suitable for raspberry pi
 
- -- Peter Michael Green <plugwash@raspbian.org>  Thu, 03 Feb 2022 18:25:41 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Wed, 05 Oct 2022 13:23:15 +0000
+
+klibc (2.0.11-1) unstable; urgency=medium
+
+  * New upstream version:
+    - Kbuild: Properly disable executable stacks in static builds
+      (Closes: #1020883)
+    - fcntl: Fix build failure for some architectures with Linux 5.19
+      (fixes FTBFS on several architectures)
+
+  [ Debian Janitor ]
+  * Remove constraints unnecessary since buster:
+    + klibc-utils: Drop versioned constraint on initramfs-tools in Breaks.
+
+  [ Ben Hutchings ]
+  * lintian: Update override in libklibc for lintian 2.115
+
+ -- Ben Hutchings <benh@debian.org>  Sun, 02 Oct 2022 03:09:49 +0200
 
 klibc (2.0.10-4) unstable; urgency=medium
 

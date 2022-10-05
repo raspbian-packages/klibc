@@ -35,7 +35,6 @@ Package: klibc-utils
 Architecture: linux-any
 Multi-Arch: foreign
 Depends: libklibc (= ${binary:Version}), ${misc:Depends}
-Breaks: initramfs-tools (<< 0.123~)
 Description: small utilities built with klibc for early boot
  This package contains a collection of programs that are linked
  against klibc. These duplicate some of the functionality of a

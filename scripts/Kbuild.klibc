@@ -82,7 +82,7 @@ KLIBCCFLAGS       := $(KCFLAGS)
 
 # Defaults for arch to override
 KLIBCARCHINCFLAGS =
-KLIBCCRTSHARED    := $(KLIBCOBJ)/interp.o
+KLIBCCRTSHARED    := $(KLIBCOBJ)/shared-stub.o
 
 LD_IS_LLD         := $(shell $(LD) --version 2>&1 | grep LLD)
 LD_IMAGE_BASE_OPT := $(if $(LD_IS_LLD),--image-base,-Ttext-segment)
@@ -133,7 +133,7 @@ KLIBCDEFS        += -D__KLIBC__=$(KLIBCMAJOR)          \
 		    -D_BITSIZE=$(KLIBCBITSIZE)
 KLIBCCPPFLAGS    += $(KLIBCDEFS)
 KLIBCCFLAGS      += $(KLIBCCPPFLAGS) $(KLIBCREQFLAGS) $(KLIBCARCHREQFLAGS)  \
-                    $(KLIBCOPTFLAGS) $(KLIBCSTACKFLGS) $(KLIBCWARNFLAGS)
+                    $(KLIBCOPTFLAGS) $(KLIBCSTACKFLAGS) $(KLIBCWARNFLAGS)
 KLIBCAFLAGS      += -D__ASSEMBLY__ $(KLIBCCFLAGS)
 KLIBCSTRIPFLAGS  += --strip-all -R .comment -R .note
 
