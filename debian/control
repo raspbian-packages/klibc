@@ -1,7 +1,7 @@
 Source: klibc
 Priority: optional
 Maintainer: Debian Kernel Team <debian-kernel@lists.debian.org>
-Uploaders: Ben Hutchings <benh@debian.org>, maximilian attems <maks@debian.org>
+Uploaders: Ben Hutchings <benh@debian.org>, maximilian attems <maks@debian.org>, Salvatore Bonaccorso <carnil@debian.org>
 Build-Depends: debhelper-compat (= 12), linux-libc-dev, m4 [sparc]
 Section: libs
 Standards-Version: 4.1.2

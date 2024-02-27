@@ -25,6 +25,9 @@ endif
 ifeq ($(DEB_HOST_ARCH),hppa)
 KLIBCARCH := parisc
 endif
+ifeq ($(DEB_HOST_ARCH),loong64)
+KLIBCARCH := loongarch64
+endif
 ifneq (,$(filter powerpc%,$(DEB_HOST_ARCH)))
 KLIBCARCH := ppc
 endif
@@ -48,6 +51,9 @@ KLIBC_MAKEFLAGS += KBUILD_VERBOSE=1
 
 # Defer stripping of debug symbols to debhelper
 KLIBC_MAKEFLAGS += CONFIG_DEBUG_INFO=y
+
+# Install shared library in /usr/lib, not /lib
+KLIBC_MAKEFLAGS += SHLIBDIR=/usr/lib
 
 # klcc will depend on ccache if it is in $PATH at build time; see #777217
 PATH := $(subst $(space),:,$(filter-out %/ccache %/ccache/,$(subst :,$(space),$(PATH))))

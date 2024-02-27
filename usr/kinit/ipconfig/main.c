@@ -357,15 +357,6 @@ static void process_timeout_event(struct state *s, time_t now)
 	int ret = 0;
 
 	/*
-	 * Is the link up?  If not, try again in 1 second.
-	 */
-	if (!netdev_running(s->dev)) {
-		s->expire = now + 1;
-		s->state = s->restart_state;
-		return;
-	}
-
-	/*
 	 * If we had an error, restore a sane state to
 	 * restart from.
 	 */
@@ -394,7 +385,7 @@ static void process_timeout_event(struct state *s, time_t now)
 
 	if (ret == -1) {
 		s->state = DEVST_ERROR;
-		s->expire = now + 10;
+		s->expire = now + 1;
 	} else {
 		s->expire = now + s->retry_period;
 
@@ -402,6 +393,12 @@ static void process_timeout_event(struct state *s, time_t now)
 		if (s->retry_period > 60)
 			s->retry_period = 60;
 	}
+}
+
+static void process_error_event(struct state *s, time_t now)
+{
+	s->state = DEVST_ERROR;
+	s->expire = now + 1;
 }
 
 static struct state *slist;
@@ -417,11 +414,17 @@ static int do_pkt_recv(int nr, struct pollfd *fds, time_t now)
 	int i, ret = 0;
 	struct state *s;
 
-	for (i = 0, s = slist; s && nr; s = s->next, i++) {
-		if (fds[i].revents & POLLRDNORM) {
-			ret |= process_receive_event(s, now);
+	for (i = 0, s = slist; s && nr; s = s->next) {
+		if (s->dev->pkt_fd != fds[i].fd)
+			continue;
+		if (fds[i].revents) {
+			if (fds[i].revents & POLLRDNORM)
+				ret |= process_receive_event(s, now);
+			else
+				process_error_event(s, now);
 			nr--;
 		}
+		i++;
 	}
 	return ret;
 }
@@ -452,11 +455,8 @@ static int loop(void)
 		int timeout_ms;
 		int x;
 
-		for (i = 0, s = slist; s; s = s->next, i++) {
+		for (i = 0, s = slist; s; s = s->next) {
 			dprintf("%s: state = %d\n", s->dev->name, s->state);
-
-			fds[i].fd = s->dev->pkt_fd;
-			fds[i].events = POLLRDNORM;
 
 			if (s->state == DEVST_COMPLETE) {
 				done++;
@@ -468,6 +468,12 @@ static int loop(void)
 			if (s->expire - now.tv_sec <= 0) {
 				dprintf("timeout\n");
 				process_timeout_event(s, now.tv_sec);
+			}
+
+			if (s->state != DEVST_ERROR) {
+				fds[i].fd = s->dev->pkt_fd;
+				fds[i].events = POLLRDNORM;
+				i++;
 			}
 
 			if (timeout > s->expire - now.tv_sec)
@@ -485,7 +491,7 @@ static int loop(void)
 			if (timeout_ms <= 0)
 				timeout_ms = 100;
 
-			nr = poll(fds, n_devices, timeout_ms);
+			nr = poll(fds, i, timeout_ms);
 			prev = now;
 			gettimeofday(&now, NULL);
 

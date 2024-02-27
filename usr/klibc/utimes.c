@@ -3,8 +3,6 @@
 #include <sys/stat.h>
 #include <sys/syscall.h>
 
-#ifndef __NR_utimes
-
 int utimes(const char *file, const struct timeval tvp[2])
 {
 	struct timespec ts[2];
@@ -18,5 +16,3 @@ int utimes(const char *file, const struct timeval tvp[2])
 
 	return utimensat(AT_FDCWD, file, &ts[0], 0);
 }
-
-#endif /* __NR_utimes */

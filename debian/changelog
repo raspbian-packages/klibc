@@ -1,9 +1,42 @@
-klibc (2.0.12-1+rpi1) bookworm-staging; urgency=medium
+klibc (2.0.13-4+rpi1) trixie-staging; urgency=medium
 
   [changes brought forward from 2.0.4-2+rpi1 by Peter Michael Green <plugwash@p10link.net> at Wed, 26 Nov 2014 22:01:00 +0000]
   * Change compiler settings to values suitable for raspberry pi
 
- -- Raspbian forward porter <root@raspbian.org>  Sat, 25 Feb 2023 17:35:04 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Tue, 27 Feb 2024 14:01:50 +0000
+
+klibc (2.0.13-4) unstable; urgency=medium
+
+  [ Sven Joachim ]
+  * debian/initramfs-tools/hooks/klibc-utils: Avoid the use of "cp -n"
+    (Closes: #1055694).
+
+  [ Salvatore Bonaccorso ]
+  * debian/control: Add myself to Uploaders
+
+ -- Salvatore Bonaccorso <carnil@debian.org>  Wed, 21 Feb 2024 13:08:58 +0100
+
+klibc (2.0.13-3) experimental; urgency=medium
+
+  * Install klibc shared library in /usr/lib
+
+ -- Ben Hutchings <benh@debian.org>  Sat, 25 Nov 2023 00:49:35 +0000
+
+klibc (2.0.13-2) unstable; urgency=medium
+
+  * d/rules: Handle loong64 architecture (thanks to Peng Fan)
+    (Closes: #1053742)
+
+ -- Ben Hutchings <benh@debian.org>  Tue, 24 Oct 2023 18:11:43 +0200
+
+klibc (2.0.13-1) unstable; urgency=medium
+
+  * New upstream version:
+    - time: Use clock_* system calls for time-of-day and sleep
+      (Closes: #923098)
+    - Install command links as appropriate (LP: #2028571)
+
+ -- Ben Hutchings <benh@debian.org>  Mon, 31 Jul 2023 15:04:13 +0200
 
 klibc (2.0.12-1) unstable; urgency=medium
 
