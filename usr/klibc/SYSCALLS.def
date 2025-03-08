@@ -18,11 +18,16 @@
  * Process-related syscalls
  */
 void _exit,exit::_exit(int);
-<?!ia64> pid_t clone::__clone(unsigned long, void *);
-<?ia64> pid_t clone::__clone2(unsigned long, void *, void *);
-# if ! _KLIBC_NO_MMU
-<!sparc,sparc64,ia64,arm64,riscv64,loongarch64> pid_t fork();
+#ifdef __NR_fork
+<!sparc,sparc64> pid_t fork();
 <sparc,sparc64> pid_t fork@forkish();
+#else
+/*
+ * The clone() parameter order varies between architectures.  However,
+ * the first 2 are always clone_flags and newsp, except on s390/s390x
+ * where we have fork() and do not use clone().
+ */
+pid_t clone::__clone(unsigned long, void *);
 #endif
 #if _KLIBC_REAL_VFORK
 /*
@@ -44,13 +49,13 @@ pid_t getsid(pid_t);
 pid_t wait4(pid_t, int *, int, struct rusage *);
 int execve(const char *, char * const *, char * const *);
 <?> int nice(int);
-<alpha,ia64> int getpriority(int, int);
-<!alpha,ia64> int getpriority::__getpriority(int, int);
+<alpha> int getpriority(int, int);
+<!alpha> int getpriority::__getpriority(int, int);
 int setpriority(int, int, int);
 int getrusage(int, struct rusage *);
 int sched_setscheduler(pid_t, int, const struct sched_param *);
-<?> int sched_setaffinity(pid_t, unsigned int, unsigned long *);
-<?> int sched_getaffinity(pid_t, unsigned int, unsigned long *);
+int sched_setaffinity(pid_t, unsigned int, unsigned long *);
+int sched_getaffinity(pid_t, unsigned int, unsigned long *);
 int sched_yield();
 <i386> int prctl@varadic(int, unsigned long, unsigned long, unsigned long, unsigned long);
 <!i386> int prctl(int, unsigned long, unsigned long, unsigned long, unsigned long);
@@ -86,9 +91,9 @@ int capset(cap_user_header_t, cap_user_data_t);
  * Filesystem-related system calls
  */
 int mount(const char *, const char *, const char *, unsigned long, const void *);
-<!alpha,ia64> int umount2(const char *, int);
-<alpha,ia64> int umount::umount2(const char *, int);
-<?> int pivot_root(const char *, const char *);
+<!alpha> int umount2(const char *, int);
+<alpha> int umount::umount2(const char *, int);
+int pivot_root(const char *, const char *);
 int sync();
 #ifdef __NR_statfs64
 int statfs64::__statfs64(const char *, size_t, struct statfs *);
@@ -109,48 +114,49 @@ int swapoff(const char *);
 <?> int access(const char *, int);
 int faccessat(int, const char *, int, int);
 <?> int link(const char *, const char *);
-<?> int linkat(int, const char *, int, const char *, int);
+int linkat(int, const char *, int, const char *, int);
 <?> int unlink(const char *);
-<?> int unlinkat(int, const char *, int);
+int unlinkat(int, const char *, int);
 int chdir(const char *);
 int fchdir(int);
 <?> int rename(const char *, const char *);
 <?> int renameat(int, const char *, int, const char *);
-<?> int renameat2(int, const char *, int, const char *, unsigned int);
+int renameat2(int, const char *, int, const char *, unsigned int);
 <?> int mknod(const char *, mode_t, dev_t);
-<?> int mknodat(int, const char *, mode_t, dev_t);
+int mknodat(int, const char *, mode_t, dev_t);
 <?> int chmod(const char *, mode_t);
 int fchmod(int, mode_t);
-<?> int fchmodat(int, const char *, mode_t, int);
+int fchmodat(int, const char *, mode_t, int);
 <?> int mkdir(const char *, mode_t);
-<?> int mkdirat(int, const char *, mode_t);
+int mkdirat(int, const char *, mode_t);
 <?> int rmdir(const char *);
-<?!alpha,ia64,mips,mips64,sh,sparc,sparc64> int pipe(int *);
+<?!alpha,mips,mips64,sh,sparc,sparc64> int pipe(int *);
 int pipe2(int *, int);
 mode_t umask(mode_t);
 int chroot(const char *);
 <?> int symlink(const char *, const char *);
-<?> int symlinkat(const char *, int, const char *);
+int symlinkat(const char *, int, const char *);
 <?> int readlink(const char *, char *, size_t);
-<?> int readlinkat(int, const char *, char *, int);
+int readlinkat(int, const char *, char *, int);
 int statx(int, const char *, int, unsigned int, struct statx *);
 int getdents64,getdents::getdents(unsigned int, struct dirent *, unsigned int);
 <?> int chown32,chown::chown(const char *, uid_t, gid_t);
 int fchown32,fchown::fchown(int, uid_t, gid_t);
-<?> int fchownat(int, const char *, uid_t, gid_t, int);
+int fchownat(int, const char *, uid_t, gid_t, int);
 <?> int lchown32,lchown::lchown(const char *, uid_t, gid_t);
 int getcwd::__getcwd(char *, size_t);
 <32> int utimensat_time64::utimensat(int, const char *, const struct timespec *, int);
 <64> int utimensat(int, const char *, const struct timespec *, int);
 <?> int inotify_init();
-<?> int inotify_add_watch(int, const char *, __u32);
-<?> int inotify_rm_watch(int, __u32);
+int inotify_init1(int);
+int inotify_add_watch(int, const char *, __u32);
+int inotify_rm_watch(int, __u32);
 
 /*
  * I/O operations
  */
 <!i386,m68k,64> int open::__open(const char *, int, mode_t);
-<?!i386,m68k,64> int openat::__openat(int, const char *, int, mode_t);
+<!i386,m68k,64> int openat::__openat(int, const char *, int, mode_t);
 <?64> int open(const char *, int, mode_t);
 <64> int openat(int, const char *, int, mode_t);
 ssize_t read(int, void *, size_t);
@@ -181,17 +187,16 @@ int ftruncate64,ftruncate::ftruncate(int, off_t);
 <!parisc> ssize_t pread64,pread::pread(int, void *, size_t, off_t);
 <!parisc> ssize_t pwrite64,pwrite::pwrite(int, void *, size_t, off_t);
 int sync_file_range,fdatasync,fsync::sync_file_range(int, off_t, off_t, unsigned int);
-<?> int splice(int, off_t *, int, off_t *, size_t, unsigned int);
-<?> int tee(int, int, size_t, unsigned int);
+int splice(int, off_t *, int, off_t *, size_t, unsigned int);
+int tee(int, int, size_t, unsigned int);
 ssize_t sendfile64,sendfile::sendfile(int, int, off_t *, size_t, off_t);
 
 /*
  * Signal operations
  */
-<!sparc,sparc64,alpha,ia64> int rt_sigaction::__rt_sigaction(int, const struct sigaction *, struct sigaction *, size_t);
+<!sparc,sparc64,alpha> int rt_sigaction::__rt_sigaction(int, const struct sigaction *, struct sigaction *, size_t);
 <sparc,sparc64> int rt_sigaction::____rt_sigaction(int, const struct sigaction *, struct sigaction *, void *, size_t);
 <alpha> int rt_sigaction::____rt_sigaction(int, const struct sigaction *, struct sigaction *, size_t, void *);
-<ia64> int rt_sigaction::____rt_sigaction(int, const struct sigaction *, struct sigaction *, size_t);
 int rt_sigsuspend::__rt_sigsuspend(const sigset_t *, size_t);
 int rt_sigpending::__rt_sigpending(sigset_t *, size_t);
 int rt_sigprocmask::__rt_sigprocmask(int, const sigset_t *, sigset_t *, size_t);
@@ -218,20 +223,20 @@ int settimeofday::__settimeofday(const void *, const struct timezone *);
 /*
  * Memory
  */
-<?> void * brk::__brk(void *);
+void * brk::__brk(void *);
 int munmap(void *, size_t);
 void * mremap(void *, size_t, size_t, unsigned long);
 int msync(const void *, size_t, int);
 int mprotect(const void *, size_t, int);
-# if _KLIBC_USE_MMAP2
+#if _KLIBC_USE_MMAP2
 <!s390> void * mmap2::__mmap2(void *, size_t, int, int, int, long);
-# else
+#else
 <!s390x> void * mmap(void *, size_t, int, int, int, long);
+#endif
 int mlockall(int);
 int munlockall();
 int mlock(const void *, size_t);
 int munlock(const void *, size_t);
-#endif
 
 /*
  * System stuff
@@ -255,10 +260,21 @@ long kexec_load(void *, unsigned long, struct kexec_segment *, unsigned long);
 <i386> int vm86(struct vm86_struct *);
 
 /*
- * Most architectures have the socket interfaces using regular
- * system calls.
+ * Socket interfaces.
  */
-<?!i386> long socketcall::__socketcall(int, const unsigned long *);
-#if ! _KLIBC_SYS_SOCKETCALL
-#include "SOCKETCALLS.def"
-#endif
+int socket(int, int, int);
+int bind(int, const struct sockaddr *, int);
+int connect(int, const struct sockaddr *, socklen_t);
+int listen(int, int);
+<?> int accept(int, struct sockaddr *, socklen_t *);
+int accept4(int, struct sockaddr *, socklen_t *, int);
+int getsockname(int, struct sockaddr *, socklen_t *);
+int getpeername(int, struct sockaddr *, socklen_t *);
+int socketpair(int, int, int, int *);
+int sendto(int, const void *, size_t, int, const struct sockaddr *, socklen_t);
+int recvfrom(int, void *, size_t, unsigned int, struct sockaddr *, socklen_t *);
+int shutdown(int, int);
+int setsockopt(int, int, int, const void *, socklen_t);
+int getsockopt(int, int, int, void *, socklen_t *);
+int sendmsg(int, const struct msghdr *, unsigned int);
+int recvmsg(int, struct msghdr *, unsigned int);

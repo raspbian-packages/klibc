@@ -10,7 +10,6 @@
 #include <setjmp.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <klibc/sysconfig.h>	/* For _KLIBC_NO_MMU */
 
 #include <linux/nfs_mount.h>
 
@@ -257,9 +256,6 @@ int nfsmount_main(int argc, char *argv[])
 
 	check_path(path);
 
-#if !_KLIBC_NO_MMU
-	/* Note: uClinux can't fork(), so the spoof portmapper is not
-	   available on uClinux. */
 	if (portmap_file)
 		spoof_portmap = start_dummy_portmap(portmap_file);
 
@@ -267,7 +263,6 @@ int nfsmount_main(int argc, char *argv[])
 		free(rem_name);
 		return 1;
 	}
-#endif
 
 	ret = 0;
 	if (nfs_mount(rem_name, hostname, server, rem_path, path,

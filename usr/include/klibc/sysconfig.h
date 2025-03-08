@@ -20,22 +20,6 @@
 
 
 /*
- * _KLIBC_NO_MMU:
- *
- *	Indicates this architecture doesn't have an MMU, and therefore
- *	does not have the sys_fork and sys_brk system calls.
- */
-/* Default to having an MMU if we can find the fork system call */
-#ifndef _KLIBC_NO_MMU
-# if defined(__NR_fork)
-#  define _KLIBC_NO_MMU 0
-# else
-#  define _KLIBC_NO_MMU 1
-# endif
-#endif
-
-
-/*
  * _KLIBC_REAL_VFORK:
  *
  *	Indicates that this architecture has a real vfork() system call.
@@ -202,17 +186,6 @@
 # define _KLIBC_HAS_ARCHSOCKET_H 0
 #endif
 
-
-/*
- * _KLIBC_SYS_SOCKETCALL
- *
- *	This architecture (e.g. SPARC) advertises socket-related
- *	system calls, which are not actually implemented.  Use
- *	socketcalls unconditionally instead.
- */
-#ifndef _KLIBC_SYS_SOCKETCALL
-# define _KLIBC_SYS_SOCKETCALL 0
-#endif
 
 /*
  * _KLIBC_ARM_USE_BX

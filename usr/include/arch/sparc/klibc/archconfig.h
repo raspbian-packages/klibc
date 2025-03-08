@@ -9,8 +9,6 @@
 #ifndef _KLIBC_ARCHCONFIG_H
 #define _KLIBC_ARCHCONFIG_H
 
-#define _KLIBC_SYS_SOCKETCALL 1 /* Use sys_socketcall unconditionally */
-
 /* So that we can avoid stack trampolines */
 #define _KLIBC_NEEDS_SA_RESTORER 1
 /* Our restorer will call rt_sigreturn() */

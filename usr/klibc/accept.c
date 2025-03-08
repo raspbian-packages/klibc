@@ -6,7 +6,7 @@
 
 #include <sys/socket.h>
 
-#if !_KLIBC_SYS_SOCKETCALL && defined(__NR_accept4) && !defined(__NR_accept)
+#ifndef __NR_accept
 
 int accept(int socket, struct sockaddr *address, socklen_t *addr_len)
 {

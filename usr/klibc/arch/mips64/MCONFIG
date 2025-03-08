@@ -11,10 +11,14 @@ KLIBCARCHREQFLAGS = -fno-pic -mno-abicalls -G 0
 KLIBCOPTFLAGS += -Os
 KLIBCBITSIZE  = 64
 
+# Normal binaries historically started at 0x120000000 (4608 MiB),
+# but this may vary between toolchain versions and targets.  To be
+# safe, we set that base address explicitly.
+KLIBCLDFLAGS         = $(LD_IMAGE_BASE_OPT) 0x120000000
+
 # Extra linkflags when building the shared version of the library
 # This address needs to be reachable using normal inter-module
 # calls, and work on the memory models for this architecture.
-# Normal binaries start at 0x120000000 (4608 MiB).
 # * On R5 and earlier, non-PIC jumps usually use the JAL instruction
 #   which requires a destination within the same 256 MiB aligned
 #   region. Since we can't put ourselves below the normal load

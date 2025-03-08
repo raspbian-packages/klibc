@@ -1,9 +1,16 @@
-klibc (2.0.13-4+rpi1) trixie-staging; urgency=medium
+klibc (2.0.14-1+rpi1) trixie-staging; urgency=medium
 
   [changes brought forward from 2.0.4-2+rpi1 by Peter Michael Green <plugwash@p10link.net> at Wed, 26 Nov 2014 22:01:00 +0000]
   * Change compiler settings to values suitable for raspberry pi
 
- -- Raspbian forward porter <root@raspbian.org>  Tue, 27 Feb 2024 14:01:50 +0000
+ -- Raspbian forward porter <root@raspbian.org>  Sat, 08 Mar 2025 16:13:53 +0000
+
+klibc (2.0.14-1) unstable; urgency=medium
+
+  * New upstream version:
+    - parisc: Fix build with Linux 6.10+ (Closes: #1075820)
+
+ -- Ben Hutchings <benh@debian.org>  Tue, 04 Mar 2025 04:37:02 +0100
 
 klibc (2.0.13-4) unstable; urgency=medium
 

@@ -112,8 +112,11 @@ static int dhcp_parse(struct netdev *dev, struct bootp_hdr *hdr,
 				break;
 			switch (opt) {
 			case 51:	/* IP Address Lease Time */
-				if (len == 4)
-					leasetime = ntohl(*(uint32_t *)ext);
+				if (len == 4) {
+					/* ext may be misaligned */
+					memcpy(&leasetime, ext, 4);
+					leasetime = ntohl(leasetime);
+				}
 				break;
 			case 53:	/* DHCP Message Type */
 				if (len == 1)

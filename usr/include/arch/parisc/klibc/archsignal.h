@@ -9,12 +9,17 @@
 #define _KLIBC_ARCHSIGNAL_H
 
 #include <asm/signal.h>
+
+#ifndef _NSIG
+
 #define _NSIG    64
 #define _NSIG_SZ (_NSIG / LONG_BIT)
 
 typedef struct {
 	unsigned long sig[_NSIG_SZ];
 } sigset_t;
+
+#endif /* _NSIG */
 
 struct sigaction {
 	__sighandler_t	sa_handler;
